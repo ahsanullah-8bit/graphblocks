@@ -7,7 +7,7 @@ import "qrc:/theme/";
 Item {
     id: root
     //width: 160
-    height: Math.max(20, Math.max(theLayout.myHeight, Math.max(inputHeight, outputHeight )))
+    height: Math.max(20, Math.max((inner?inner.height?inner.height:0:0) + theLayout.height + 10, Math.max(inputHeight, outputHeight )))
     z: 100
     property real slotWidth: 10
     property var inner: []
@@ -17,17 +17,23 @@ Item {
     property real outputWidth: 0
     property real inputHeight: 10
     property real outputHeight: 10
-    property real middleWidth: middleWidthText.width + 10
+    property real middleWidth: Math.max(middleWidthText.width + 10, inner?inner.width?inner.width:0:0) + 10
     width: Math.max(50, inputWidth + outputWidth + middleWidth + rootRect.anchors.leftMargin + rootRect.anchors.rightMargin)
     property int uniqueId
-    default property alias parentForInner: theLayout
-    property var slots
+    default property alias parentForInner: parentForInnerElem
+    property var slotsIn
+    property var slotsOut
     property var connections
-    function getSlot(propName) {
-        return slots[propName];
+    function getSlot(propName, isInput) {
+        if(isInput) {
+            return slotsIn[propName];
+        } else {
+            return slotsOut[propName];
+        }
     }
     Component.onCompleted: {
-        slots = {}; //Note: this must be executed before Repeater expands
+        slotsIn = {}; //Note: this must be executed before Repeater expands
+        slotsOut = {};
         connections = [];
     }
     Component.onDestruction: {
@@ -78,10 +84,12 @@ Item {
         ColumnLayout {
             property real myHeight: 0
             id: theLayout
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
             anchors.topMargin: 5
             anchors.bottomMargin: 5
-            anchors.leftMargin: Math.max( 0, root.inputWidth - 5)
+            anchors.leftMargin: Math.max( 3, root.inputWidth - 5)
             anchors.rightMargin: root.outputWidth
             TextField {
                 id:textFieldBlockDisplayName
@@ -92,7 +100,7 @@ Item {
                     renderType: Text.QtRendering
                     background: Rectangle {
                         radius: 2
-                        implicitWidth: root.middleWidth
+                        implicitWidth: middleWidthText.width + 10
                         implicitHeight: 24
                         border.color: "#333"
                         border.width: 1
@@ -101,19 +109,28 @@ Item {
                 }
                 onEditingFinished: root.displayName = text;
             }
-            onChildrenChanged: {
-                var h = 0;
-                for(var chi=0; chi < theLayout.children.length ; ++chi) {
-                    h += theLayout.children[chi].height;
-                }
-                myHeight = h;
-            }
-
-//            Text {
-//                text: "Class: " + root.className
-//                font.capitalization: Font.SmallCaps
-//                font.pointSize: 8
+//            onChildrenChanged: {
+//                var h = 0;
+//                for(var chi=0; chi < theLayout.children.length ; ++chi) {
+//                    h += theLayout.children[chi].height;
+//                }
+//                myHeight = h;
 //            }
+
+            Text {
+                id: classNameText
+                visible: typeof root.inner != "object"
+                color: "red"
+                text: "Class:\n" + root.className
+                font.capitalization: Font.SmallCaps
+                font.pointSize: 8
+            }
+        }
+        Item {
+            id: parentForInnerElem
+            anchors.top: theLayout.bottom
+            anchors.left: parent.left
+            anchors.leftMargin: Math.max( 3, root.inputWidth - 5)
         }
     }
 
@@ -156,7 +173,7 @@ Item {
                 color: "black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
-                    slots[inner.input[index]] = inSlot;
+                    slotsIn[inner.input[index]] = inSlot;
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -222,7 +239,7 @@ Item {
                 color: "black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
-                    slots[inner.output[index]] = outSlot;
+                    slotsOut[inner.output[index]] = outSlot;
                 }
                 MouseArea {
                     anchors.fill: parent

@@ -65,7 +65,7 @@ ApplicationWindow {
         onTriggered: {
             // use timer for clear to run in the correct thread. Destroy did not work in a fileDialog's signal.
             var ser = openFile.read();
-            console.log( "file: " + ser );
+            //console.log( "file: " + ser );
             graphBlockControl.clear();
             graphBlockControl.loadGraph( JSON.parse( ser ), graphBlockView.classMap, {x:0, y:0} );
         }

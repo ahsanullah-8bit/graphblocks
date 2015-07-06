@@ -1,6 +1,9 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.4
 import QtQuick.Controls.Styles 1.4
+import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.1
+import "qrc:/theme/";
 
 ListView {
     id:root
@@ -61,7 +64,7 @@ ListView {
                             border.width: 1
                         }
                     }
-                    height: 40
+                    height: 24
                 }
             }
         }
@@ -90,7 +93,7 @@ ListView {
         }
         Item {
             id: blockAdd
-            property string displayName: "Add"
+            property string displayName: "Add Real"
             property var compo: Component {
                 Item {
                     property var input: ["op1", "op2"]
@@ -98,6 +101,19 @@ ListView {
                     property real op1
                     property real op2
                     property real result: op1 + op2
+                }
+            }
+        }
+        Item {
+            id: blockAddGeneric
+            property string displayName: "Add"
+            property var compo: Component {
+                Item {
+                    property var input: ["op1", "op2"]
+                    property var output: ["result"]
+                    property var op1
+                    property var op2
+                    property var result: op1 + op2
                 }
             }
         }
@@ -113,6 +129,104 @@ ListView {
                 }
             }
         }
+
+        Item {
+            id: blockFire
+            property string displayName: "Fire"
+            property var compo: Component {
+                Button {
+                    property var input: ["fire"]
+                    property var output: ["onFire"]
+                    signal onFire()
+                    text: "Fire"
+                    function fire() { onFire(); }
+                    onClicked: {
+                        fire();
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: blockString
+            property string displayName: "String"
+            property var compo: Component {
+                TextField {
+                    id: textField
+                    property var input: ["text"]
+                    property var output: ["text"]
+                    height: 24
+                    //width: Math.max(20, inviText.width + 10)
+                    style: TextFieldStyle {
+                        textColor: "black"
+                        background: Rectangle {
+                            radius: 2
+                            implicitWidth: Math.max(20, inviText.width + 10)
+                            implicitHeight: 24
+                            border.color: "#333"
+                            border.width: 1
+                        }
+                    }
+                    Text {
+                        id: inviText
+                        visible: false
+                        text: textField.text
+                    }
+                    function serialize() {
+                        return {text: text}
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: blockMessageBox
+            property string displayName: "MessageBox"
+            property var compo: Component {
+                Item {
+                    id: blockDialog
+                    //Dialog must be wrapped, because it with and height is not meant to be used by block!
+                    property var input: ["title", "text", "show"]
+                    property var output: ["accepted", "discard", "dialogVisible"]
+                    property alias text: dialogText.text
+                    signal accepted()
+                    signal discard()
+                    property alias title: dialog.title
+                    property alias dialogVisible: dialog.visible
+
+                    function show() { dialog.visible = true; }
+                    Text {
+                        id: titleText
+                        x: 0
+                        y: 0
+                        text: blockDialog.title
+                        color: ColorTheme.blockTextColor
+                    }
+                    width: titleText.width
+                    height: titleText.height
+                    Dialog {
+                        id: dialog
+                        height: 30
+                        standardButtons: StandardButton.Ok | StandardButton.Cancel
+                        onAccepted: {
+                            dialog.visible = false;
+                            blockDialog.accepted();
+                        }
+                        onDiscard: {
+                            dialog.visible = false;
+                            blockDialog.discard();
+                        }
+                        ColumnLayout {
+                            anchors.fill: parent
+                            Text {
+                                id:dialogText
+                                text: "text"
+                            }
+                        }
+                    }
+                }
+            }
+        }
         Item {
             id: blockChangingVal
             property string displayName: "SinusValue"
@@ -123,11 +237,13 @@ ListView {
                     SequentialAnimation on result {
                         running: true
                         loops: Animation.Infinite
-                        PropertyAnimation { to: 1 }
-                        PropertyAnimation { to: 0 }
+                        PropertyAnimation { from: 0; to: 1; easing.type: Easing.SineCurve }
+                        PropertyAnimation { from: 1; to: 0; easing.type: Easing.SineCurve }
                     }
                     text: result.toFixed(4)
-                    height: 30
+                    height: 20
+                    width: 50
+                    color: ColorTheme.blockTextColor
                 }
             }
         }
@@ -139,6 +255,7 @@ ListView {
                 Item {
                     property var input: ["inp", "acti"]
                     property var output: ["outp"]
+                    property bool noInitialBind: true
                     property var inp: 0.0
                     property var outp: 0.0
                     property var acti: function(){ outp = inp; }

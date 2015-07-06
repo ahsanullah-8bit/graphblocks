@@ -2,7 +2,7 @@ pragma Singleton
 import QtQuick 2.0
 
 Item {
-    readonly property color backgroundColor: "#101010"
+    readonly property color backgroundColor: "#1C1C1C"
     readonly property color blockTextColor: "#969696"
     readonly property color blockBorderColor: "#0092CC"
     readonly property color blockBorderColorHighlight: "#FF3333"

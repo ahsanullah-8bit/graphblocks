@@ -35,11 +35,12 @@ Item {
             var serializedConnection = {
                 s1: connection.slot1.blockOuter.uniqueId,
                 pn1: connection.slot1.propName,
+                s1Inp: connection.slot1.isInput,
                 s2: connection.slot2.blockOuter.uniqueId,
                 pn2: connection.slot2.propName};
             objToSerialize.connections.push( serializedConnection );
         }
-        console.log(JSON.stringify( objToSerialize ));
+        //console.log(JSON.stringify( objToSerialize ));
         return objToSerialize;
     }
     function loadGraph(obj, classMap, offset) {
@@ -54,9 +55,13 @@ Item {
             newBlock.uniqueId += startUniqueId;
             nextUniqueId = Math.max(nextUniqueId, newBlock.uniqueId);
             var compo = classMap[blocks[i].blockProto.className];
-            var newBlockInner = compo.compo.createObject(newBlock.parentForInner, serBlock.innerProto);
-            newBlock.inner = newBlockInner;
-
+            if(!compo) {
+                console.log("ERROR: graph could not be loaded due to unknown block type: \"" + blocks[i].blockProto.className + "\"");
+                newBlock.inner = "ERROR";
+            } else {
+                var newBlockInner = compo.compo.createObject(newBlock.parentForInner, serBlock.innerProto);
+                newBlock.inner = newBlockInner;
+            }
             savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = newBlock;
         }
         nextUniqueId++;
@@ -64,8 +69,8 @@ Item {
             var connection = connections[l];
             var b1 = savedUniqueIdToBlock[connection.s1];
             var b2 = savedUniqueIdToBlock[connection.s2];
-            var s1 = b1.getSlot(connection.pn1);
-            var s2 = b2.getSlot(connection.pn2);
+            var s1 = b1.getSlot(connection.pn1, connection.s1Inp);
+            var s2 = b2.getSlot(connection.pn2, !connection.s1Inp);
             fullScreenMouseArea.createConnection(s1, s2);
         }
     }
@@ -207,6 +212,12 @@ Item {
                 }
                 function createConnection(slot1, slot2) {
                     //can connect?
+                    if(typeof slot1 === "undefined" || typeof slot2 === "undefined") {
+                        return;
+                    }
+                    if(typeof slot1.parent === "undefined" || typeof slot2.parent === "undefined") {
+                        return;
+                    }
                     if(slot1.parent.parent === slot2.parent.parent) {
                         return;
                     }
@@ -229,7 +240,8 @@ Item {
 
                     if(typeIn == "function" && typeOut == "function") {
                         outp.block[outp.propName].connect(inp.block[inp.propName]);
-                        inp.block[inp.propName]();
+                        // no initial call
+                        //inp.block[inp.propName]();
                     } else {
                         //forbid multiple inputs?
                         Object.keys(connections[inp]).forEach(function(s2prop) {
@@ -249,7 +261,10 @@ Item {
                         // no check is added here for performance
                         var fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; }
                         theSignal.connect( fn );
-                        fn();
+                        //initial set value
+                        if(!outp.block.noInitialBind) {
+                            fn();
+                        }
                     }
                     var newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, slotFunc: fn, startSignal: theSignal});
                     connections[inp][outp] = newConnection;
