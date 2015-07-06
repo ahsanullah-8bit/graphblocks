@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>GraphBlocksGraphControl.qml</file>
+        <file>GraphBlocksBlocksListView.qml</file>
+        <file>GraphBlocksBlock.qml</file>
+        <file>GraphBlocksConnection.qml</file>
+        <file>theme/qmldir</file>
+        <file>theme/ColorTheme.qml</file>
+    </qresource>
+</RCC>
