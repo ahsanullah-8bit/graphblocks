@@ -8,6 +8,8 @@ Item {
     property var input
     property var output
 
+    property var sourceElement: root
+
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
     property Component connectionComponent: Qt.createComponent("GraphBlocksConnection.qml")
     property int nextUniqueId: 0
@@ -63,13 +65,13 @@ Item {
     }
     property real nextInY: 100
     property real nextOutY: 100
-    function createDynamicInputBlock(setupInner) {
-        createDynamicBlock(dynamicBlockInpCompo, {x: 100, y: nextInY}, setupInner);
-        nextInY += 150;
+    function createDynamicInputBlock(displayName, setupInner) {
+        createDynamicBlock(dynamicBlockInpCompo, {x: 100, y: nextInY, displayName: "in_"+displayName, editable: false, isInputBlock: true}, setupInner);
+        nextInY += 50;
     }
-    function createDynamicOutputBlock(setupInner) {
-        createDynamicBlock(dynamicBlockOutpCompo, {x: 800, y: nextOutY}, setupInner);
-        nextOutY += 150;
+    function createDynamicOutputBlock(displayName, setupInner) {
+        createDynamicBlock(dynamicBlockOutpCompo, {x: 400, y: nextOutY, displayName: "out_"+displayName, editable: false, isOutputBlock: true}, setupInner);
+        nextOutY += 50;
     }
     function createDynamicBlock(dynamicBlockCompo, proto, setupInner) {
         var newBlock = root.blockComponent.createObject(parentForBlocks, proto);
@@ -123,17 +125,20 @@ Item {
                 console.debug("Error: "+ connectionComponent.errorString() );
         }
         for(var inputs in root.input) {
-            createDynamicInputBlock(function(innerBlock) {
+            createDynamicInputBlock(root.input[inputs], function(innerBlock) {
                 var propName = root.input[inputs];
                 var chSigNam = propName.charAt(0).toUpperCase();
                 chSigNam += propName.substring(1);
-                var theSignal = root["on"+chSigNam+"Changed"];
-                theSignal.connect(function() { innerBlock.outp = root[propName];});
+                var theSignal = root.sourceElement["on"+chSigNam+"Changed"];
+                theSignal.connect(function() { innerBlock.outp = root.sourceElement[propName];});
             });
         }
         for(var outputs in root.output) {
-            createDynamicOutputBlock(function(innerBlock) {
-                innerBlock.onInpChanged.connect(function() { root[root.output[outputs]] = innerBlock.inp; });
+            createDynamicOutputBlock(root.output[outputs], function(innerBlock) {
+                var myOut = outputs;
+                innerBlock.onInpChanged.connect(function() {
+                    root.sourceElement[root.output[myOut]] = innerBlock.inp;
+                });
             });
         }
     }
@@ -261,6 +266,10 @@ Item {
                     }
                     dragStartSlot = null;
                 }
+                function createConnectionWithoutGraphic(inpSource, inpName, outSource, outpName) {
+                    //TODO: use this for input output blocks. svae input output correctly
+                }
+
                 function createConnection(slot1, slot2) {
                     //can connect?
                     if(typeof slot1 === "undefined" || typeof slot2 === "undefined") {
@@ -314,18 +323,14 @@ Item {
                         if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
                             var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000
                             fn = function() {
-                                console.log("lazy");
-                                if(inp.lazyConnectTimer.running) {
-                                    console.log("running tmr");
+                                if( inp.lazyConnectTimer.running ) {
                                     return;
                                 }
                                 var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
                                 if(timediff >= lazyInterval) {
-                                    console.log("direct set possible");
                                     inp.block[inp.propName] = outp.block[outp.propName];
                                     inp.lazyConnectTimer.lastConnect = Date.now();
                                 } else {
-                                    console.log("setupDelay: " + (lazyInterval - timediff));
                                     inp.lazyConnectTimer.interval = lazyInterval - timediff;
                                     inp.lazyConnectTimer.start();
                                     inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time

@@ -105,6 +105,58 @@ ListView {
             }
         }
         Item {
+            id: blockMul
+            property string displayName: "Multiply Real"
+            property var compo: Component {
+                Item {
+                    property var input: ["op1", "op2"]
+                    property var output: ["result"]
+                    property real op1
+                    property real op2
+                    property real result: op1 * op2
+                }
+            }
+        }
+        Item {
+            id: blockSub
+            property string displayName: "Substract Real"
+            property var compo: Component {
+                Item {
+                    property var input: ["op1", "op2"]
+                    property var output: ["result"]
+                    property real op1
+                    property real op2
+                    property real result: op1 - op2
+                }
+            }
+        }
+        Item {
+            id: blockDiv
+            property string displayName: "Divide Real"
+            property var compo: Component {
+                Item {
+                    property var input: ["op1", "op2"]
+                    property var output: ["result"]
+                    property real op1
+                    property real op2
+                    property real result: op1 / op2
+                }
+            }
+        }
+        Item {
+            id: blockPow
+            property string displayName: "Power Real"
+            property var compo: Component {
+                Item {
+                    property var input: ["op1", "op2"]
+                    property var output: ["result"]
+                    property real op1
+                    property real op2
+                    property real result: Math.pow(op1, op2)
+                }
+            }
+        }
+        Item {
             id: blockLazyPassThrough
             property string displayName: "Lazy Pass"
             property var compo: Component {

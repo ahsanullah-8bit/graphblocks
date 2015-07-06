@@ -17,20 +17,33 @@ ApplicationWindow {
     }
     ColumnLayout {
         anchors.fill: parent
-
         Button {
             text: gbw.myValue
             GraphBlocksWindow {
                 id: gbw
-                control.input: ["mouseCoordX"]
-                control.output: ["myValue"]
+                control.input: ["mouseCoordX", "mouseCoordY", "mouseCoordXRand"]
+                control.output: ["myValue", "ballX", "ballY"]
+                control.sourceElement: gbw
                 property real myValue
+                property real ballX
+                property real ballY
                 property real mouseCoordX: ma.mouseX
+                property real mouseCoordY: ma.mouseY
+                property real mouseCoordXRand: ma.mouseX + 100
                 visible: false
-                width: 500
+                width: 800
                 height: 500
             }
             onClicked: gbw.visible = !gbw.visible
         }
+    }
+    Rectangle {
+        id: ball
+        x: gbw.ballX
+        y: gbw.ballY
+        radius: 5
+        width: 10
+        height: 10
+        color: "green"
     }
 }

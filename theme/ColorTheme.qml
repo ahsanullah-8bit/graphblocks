@@ -8,6 +8,12 @@ Item {
     readonly property color blockBorderColorHighlight: "#FF3333"
     readonly property color blockColor1: "#323232"
     readonly property color blockColor2: "#282828"
+    readonly property color inputBlockColor1: "#6C71C4"
+    readonly property color inputBlockColor2: "#268BD2"
+    readonly property color outputBlockColor1: "#CB4B16"
+    readonly property color outputBlockColor2: "#DC322F"
+    readonly property color inputOutputBlockTextColor: "#000000"
+    readonly property color inputOutputBlockBorderColor: "#000000"
     readonly property real blockRadius: 3
     readonly property color toolTipBackgroundColor: "#F0F0F0"
     readonly property color toolTipTextColor: "#282828"

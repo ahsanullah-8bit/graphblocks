@@ -24,6 +24,9 @@ Item {
     property var slotsIn
     property var slotsOut
     property var connections
+    property bool editable: true
+    property bool isInputBlock: false
+    property bool isOutputBlock: false
     function getSlot(propName, isInput) {
         if(isInput) {
             return slotsIn[propName];
@@ -43,8 +46,10 @@ Item {
     }
     Keys.onPressed: {
         if (event.key === Qt.Key_Delete) {
-            destroy();
-            event.accepted = true;
+            if(root.editable) {
+                destroy();
+                event.accepted = true;
+            }
         }
     }
 
@@ -54,11 +59,11 @@ Item {
         anchors.leftMargin:root.slotWidth
         anchors.fill: parent
         radius: ColorTheme.blockRadius
-        border.color: root.focus?ColorTheme.blockBorderColorHighlight:ColorTheme.blockBorderColor
+        border.color: root.focus?ColorTheme.blockBorderColorHighlight:(root.isInputBlock||root.isOutputBlock)?ColorTheme.inputOutputBlockBorderColor:ColorTheme.blockBorderColor
         border.width: 1 //+ 2*root.focus
         gradient: Gradient {
-            GradientStop { position: 0.0; color: ColorTheme.blockColor1}//Qt.rgba(1.0,1.0,1.0,1.0) }
-            GradientStop { position: 1.0; color: ColorTheme.blockColor2}//Qt.rgba(0.9,0.9,0.95,1.0) }
+            GradientStop { position: 0.0; color: root.isOutputBlock?ColorTheme.outputBlockColor1:root.isInputBlock?ColorTheme.inputBlockColor1:ColorTheme.blockColor1}//Qt.rgba(1.0,1.0,1.0,1.0) }
+            GradientStop { position: 1.0; color: root.isOutputBlock?ColorTheme.outputBlockColor2:root.isInputBlock?ColorTheme.inputBlockColor2:ColorTheme.blockColor2}//Qt.rgba(0.9,0.9,0.95,1.0) }
         }
         Drag.dragType: Drag.Internal
         MouseArea {
@@ -93,10 +98,11 @@ Item {
             anchors.rightMargin: root.outputWidth
             TextField {
                 id:textFieldBlockDisplayName
+                enabled: root.editable
                 font.bold: true
                 text: root.displayName
                 style: TextFieldStyle {
-                    textColor: ColorTheme.blockTextColor
+                    textColor: (root.isInputBlock||root.isOutputBlock)?ColorTheme.inputOutputBlockTextColor:ColorTheme.blockTextColor
                     renderType: Text.QtRendering
                     background: Rectangle {
                         radius: 2
