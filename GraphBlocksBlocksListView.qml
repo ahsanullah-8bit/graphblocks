@@ -194,7 +194,20 @@ ListView {
                     property alias title: dialog.title
                     property alias dialogVisible: dialog.visible
 
-                    function show() { dialog.visible = true; }
+                    property var clicks: []
+
+                    function show() {
+                        var secondsAgo = Date.now() - 15000;
+                        var clicksSecondsAgo = 0;
+                        for(var then in blockDialog.clicks) {
+                            clicksSecondsAgo += blockDialog.clicks[then] > secondsAgo;
+                        }
+                        if(clicksSecondsAgo > 5) {
+                            console.log("wait for dialog to open again");
+                            return;
+                        }
+                        dialog.visible = true;
+                    }
                     Text {
                         id: titleText
                         x: 0
@@ -209,10 +222,13 @@ ListView {
                         height: 30
                         standardButtons: StandardButton.Ok | StandardButton.Cancel
                         onAccepted: {
+                            console.log("acc");
+                            blockDialog.clicks.push(Date.now());
                             dialog.visible = false;
                             blockDialog.accepted();
                         }
                         onDiscard: {
+                            blockDialog.clicks.push(Date.now());
                             dialog.visible = false;
                             blockDialog.discard();
                         }
