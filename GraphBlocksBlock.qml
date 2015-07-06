@@ -169,11 +169,17 @@ Item {
                 property string propName: inner.input[index]
                 property var block: inner
                 property var blockOuter: root
+                property alias lazyConnectTimer: theLazyConnectTimer
                 height: 20
                 color: "black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
                     slotsIn[inner.input[index]] = inSlot;
+                }
+                Timer {
+                    id: theLazyConnectTimer
+                    repeat: false
+                    property var lastConnect: -99999
                 }
                 MouseArea {
                     anchors.fill: parent

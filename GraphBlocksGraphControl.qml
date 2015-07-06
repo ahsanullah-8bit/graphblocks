@@ -4,6 +4,10 @@ import "qrc:/theme/";
 Item {
     id: root
     z: -100
+
+    property var input
+    property var output
+
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
     property Component connectionComponent: Qt.createComponent("GraphBlocksConnection.qml")
     property int nextUniqueId: 0
@@ -43,6 +47,39 @@ Item {
         //console.log(JSON.stringify( objToSerialize ));
         return objToSerialize;
     }
+    Component {
+        id: dynamicBlockInpCompo
+        Item {
+            property var input: ["inp"]
+            property var inp
+        }
+    }
+    Component {
+        id: dynamicBlockOutpCompo
+        Item {
+            property var input: ["outp"]
+            property var outp
+        }
+    }
+    property real nextInY: 100
+    property real nextOutY: 100
+    function createDynamicInputBlock(setupInner) {
+        createDynamicBlock(dynamicBlockInpCompo, {x: 100, y: nextInY}, setupInner);
+        nextInY += 150;
+    }
+    function createDynamicOutputBlock(setupInner) {
+        createDynamicBlock(dynamicBlockOutpCompo, {x: 800, y: nextOutY}, setupInner);
+        nextOutY += 150;
+    }
+    function createDynamicBlock(dynamicBlockCompo, proto, setupInner) {
+        var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
+        newBlock.uniqueId += nextUniqueId;
+        nextUniqueId++;
+        var newBlockInner = dynamicBlockCompo.createObject(newBlock.parentForInner, proto);
+        setupInner(newBlockInner);
+        newBlock.inner = newBlockInner;
+    }
+
     function loadGraph(obj, classMap, offset) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
@@ -84,6 +121,16 @@ Item {
         {
             if( connectionComponent.status == Component.Error )
                 console.debug("Error: "+ connectionComponent.errorString() );
+        }
+        for(var inputs in root.input) {
+            createDynamicOutputBlock(function(innerBlock) {
+                innerBlock.onOutpChanged.connect(function() { root[root.input[inputs]]});
+            });
+        }
+        for(var outputs in root.output) {
+            createDynamicInputBlock(function(innerBlock) {
+
+            });
         }
     }
 
@@ -259,7 +306,31 @@ Item {
                         var theSignal = outp.block["on"+chSigNam+"Changed"];
                         // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
                         // no check is added here for performance
-                        var fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; }
+                        var fn;
+                        if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
+                            var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000
+                            fn = function() {
+                                console.log("lazy");
+                                if(inp.lazyConnectTimer.running) {
+                                    console.log("running tmr");
+                                    return;
+                                }
+                                var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
+                                if(timediff >= lazyInterval) {
+                                    console.log("direct set possible");
+                                    inp.block[inp.propName] = outp.block[outp.propName];
+                                    inp.lazyConnectTimer.lastConnect = Date.now();
+                                } else {
+                                    console.log("setupDelay: " + (lazyInterval - timediff));
+                                    inp.lazyConnectTimer.interval = lazyInterval - timediff;
+                                    inp.lazyConnectTimer.start();
+                                    inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time
+                                }
+                            }
+                            inp.lazyConnectTimer.onTriggered.connect(fn);
+                        } else {
+                            fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; }
+                        }
                         theSignal.connect( fn );
                         //initial set value
                         if(!outp.block.noInitialBind) {

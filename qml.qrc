@@ -7,5 +7,6 @@
         <file>GraphBlocksConnection.qml</file>
         <file>theme/qmldir</file>
         <file>theme/ColorTheme.qml</file>
+        <file>GraphBlocksWindow.qml</file>
     </qresource>
 </RCC>

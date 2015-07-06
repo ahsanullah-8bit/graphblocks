@@ -105,6 +105,44 @@ ListView {
             }
         }
         Item {
+            id: blockLazyPassThrough
+            property string displayName: "Lazy Pass"
+            property var compo: Component {
+                TextField {
+                    id: textField
+                    property bool lazyConnect: true
+                    property real lazyInterval: 5000
+                    property var lazyInputProps: ["inp"]
+                    property var input: ["inp", "lazyInterval"]
+                    property var output: ["outp"]
+                    property var inp
+                    property var outp: inp
+                    height: 24
+                    text: "5000"
+                    onLazyIntervalChanged: text = lazyInterval;
+                    onEditingFinished: lazyInterval = parseInt(text)
+                    style: TextFieldStyle {
+                        textColor: "black"
+                        background: Rectangle {
+                            radius: 2
+                            implicitWidth: Math.max(20, inviText.width + 10)
+                            implicitHeight: 24
+                            border.color: "#333"
+                            border.width: 1
+                        }
+                    }
+                    Text {
+                        id: inviText
+                        visible: false
+                        text: textField.text
+                    }
+                    function serialize() {
+                        return {lazyInterval: textField.lazyInterval}
+                    }
+                }
+            }
+        }
+        Item {
             id: blockAddGeneric
             property string displayName: "Add"
             property var compo: Component {
@@ -222,7 +260,6 @@ ListView {
                         height: 30
                         standardButtons: StandardButton.Ok | StandardButton.Cancel
                         onAccepted: {
-                            console.log("acc");
                             blockDialog.clicks.push(Date.now());
                             dialog.visible = false;
                             blockDialog.accepted();
@@ -260,6 +297,28 @@ ListView {
                     height: 20
                     width: 50
                     color: ColorTheme.blockTextColor
+                }
+            }
+        }
+        Item {
+            id: blockNow
+            property string displayName: "Now"
+            property string className: "NowTime"
+            property var compo: Component {
+                Text {
+                    property var output: ["now"]
+                    property real now
+
+                    text: now
+                    height: 20
+                    width: 110
+                    color: ColorTheme.blockTextColor
+                    Timer {
+                        running: true
+                        interval: 10
+                        repeat: true
+                        onTriggered: now = Date.now();
+                    }
                 }
             }
         }
