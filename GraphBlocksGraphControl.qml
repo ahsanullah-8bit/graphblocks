@@ -50,15 +50,15 @@ Item {
     Component {
         id: dynamicBlockInpCompo
         Item {
-            property var input: ["inp"]
-            property var inp
+            property var output: ["outp"]
+            property var outp
         }
     }
     Component {
         id: dynamicBlockOutpCompo
         Item {
-            property var input: ["outp"]
-            property var outp
+            property var input: ["inp"]
+            property var inp
         }
     }
     property real nextInY: 100
@@ -72,10 +72,10 @@ Item {
         nextOutY += 150;
     }
     function createDynamicBlock(dynamicBlockCompo, proto, setupInner) {
-        var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
+        var newBlock = root.blockComponent.createObject(parentForBlocks, proto);
         newBlock.uniqueId += nextUniqueId;
         nextUniqueId++;
-        var newBlockInner = dynamicBlockCompo.createObject(newBlock.parentForInner, proto);
+        var newBlockInner = dynamicBlockCompo.createObject(newBlock.parentForInner, {});
         setupInner(newBlockInner);
         newBlock.inner = newBlockInner;
     }
@@ -123,13 +123,17 @@ Item {
                 console.debug("Error: "+ connectionComponent.errorString() );
         }
         for(var inputs in root.input) {
-            createDynamicOutputBlock(function(innerBlock) {
-                innerBlock.onOutpChanged.connect(function() { root[root.input[inputs]]});
+            createDynamicInputBlock(function(innerBlock) {
+                var propName = root.input[inputs];
+                var chSigNam = propName.charAt(0).toUpperCase();
+                chSigNam += propName.substring(1);
+                var theSignal = root["on"+chSigNam+"Changed"];
+                theSignal.connect(function() { innerBlock.outp = root[propName];});
             });
         }
         for(var outputs in root.output) {
-            createDynamicInputBlock(function(innerBlock) {
-
+            createDynamicOutputBlock(function(innerBlock) {
+                innerBlock.onInpChanged.connect(function() { root[root.output[outputs]] = innerBlock.inp; });
             });
         }
     }
