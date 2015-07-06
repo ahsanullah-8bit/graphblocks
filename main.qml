@@ -22,8 +22,8 @@ ApplicationWindow {
             text: gbw.myValue
             GraphBlocksWindow {
                 id: gbw
-                property var input: ["mouseCoordX"]
-                property var output: ["myValue"]
+                input: ["mouseCoordX"]
+                output: ["myValue"]
                 property real myValue
                 property real mouseCoordX: ma.mouseX
                 visible: false

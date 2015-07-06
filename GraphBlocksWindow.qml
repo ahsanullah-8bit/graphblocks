@@ -8,6 +8,8 @@ import FileIO 1.0
 ApplicationWindow {
     title: qsTr("GraphBlocks")
 
+    property alias control: graphBlockControl
+
     menuBar: MenuBar {
         Menu {
             title: qsTr("&File")
