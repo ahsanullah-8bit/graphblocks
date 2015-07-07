@@ -13,7 +13,7 @@ Item {
     property var ioBlocks
 
     property var classMap
-    property var blocksModel
+    property alias blocksModel: ctxMenu.blocksModel
 
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
     property Component connectionComponent: Qt.createComponent("GraphBlocksConnection.qml")

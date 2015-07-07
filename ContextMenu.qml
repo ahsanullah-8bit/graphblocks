@@ -6,7 +6,9 @@ import "qrc:/theme/";
 Rectangle {
     id: root
     property string filterFieldName
-    property alias blocksModel: lv.model
+    property ListModel blocksModel <-todo: single model!
+
+    property ListModel filteredModel: ListModel {}
     property alias selection: lv.currentItem
     property var classMap
     border.width: 1
@@ -23,6 +25,10 @@ Rectangle {
             ff.text = "";
             ff.forceActiveFocus();
         }
+        filteredModel.clear();
+        for(var i; i<root.blocksModel.count ; ++i) {
+            filteredModel.append(blocksModel.get(i));
+        }
     }
     ColumnLayout {
         anchors.fill: parent
@@ -31,20 +37,30 @@ Rectangle {
             Layout.fillWidth: true
             id: ff
             placeholderText: "filter..."
-
+            onTextChanged: {
+                filteredModel.clear();
+                var re = new RegExp(ff.text);
+                for(var i; i<blocksModel.count ; ++i) {
+                    var block = blocksModel.get(i);
+                    if(block.displayName.match(re)) {
+                        filteredModel.append(block);
+                    }
+                }
+            }
         }
         ListView {
             clip: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             id: lv
+            model: filteredModel
             delegate: Text {
                 text: displayName
                 color: "black"
-                visible: {
-                    var re = new RegExp(ff.text);
-                    return displayName.match(re);
-                }
+//                visible: {
+//                    var re = new RegExp(ff.text);
+//                    return displayName.match(re);
+//                }
             }
         }
     }
