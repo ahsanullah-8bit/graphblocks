@@ -19,5 +19,8 @@ Item {
     readonly property color toolTipTextColor: "#282828"
     readonly property color connectionColor: "#DCD427"
     readonly property color connectionColorHighlight: "#FF3333"
+    readonly property color contextMenu1: "#323232"
+    readonly property color contextMenu2: "#323232"
+    readonly property color contextMenuBorder: "#FF3333"
 }
 

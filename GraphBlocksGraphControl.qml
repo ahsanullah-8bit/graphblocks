@@ -10,6 +10,11 @@ Item {
 
     property var sourceElement: root
 
+    property var ioBlocks
+
+    property var classMap
+    property var blocksModel
+
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
     property Component connectionComponent: Qt.createComponent("GraphBlocksConnection.qml")
     property int nextUniqueId: 0
@@ -18,7 +23,9 @@ Item {
             parentForConnections.children[l].destroy();
         }
         for(var i= 0 ; i < parentForBlocks.children.length ; ++i) {
-            parentForBlocks.children[i].destroy();
+            if(!parentForBlocks.children[i].isInputBlock && !parentForBlocks.children[i].isOutputBlock) {
+                parentForBlocks.children[i].destroy();
+            }
         }
     }
     function saveGraph() {
@@ -32,7 +39,9 @@ Item {
                     y:block.y,
                     displayName: block.displayName,
                     className: block.className?block.className:block.displayName,
-                    uniqueId: block.uniqueId},
+                    uniqueId: block.uniqueId,
+                    isInputBlock: block.isInputBlock,
+                    isOutputBlock: block.isOutputBlock},
                 innerProto: serializedInner};
             objToSerialize.blocks.push( serializedBlock );
         }
@@ -80,6 +89,7 @@ Item {
         var newBlockInner = dynamicBlockCompo.createObject(newBlock.parentForInner, {});
         setupInner(newBlockInner);
         newBlock.inner = newBlockInner;
+        ioBlocks[newBlock.displayName] = newBlock;
     }
 
     function loadGraph(obj, classMap, offset) {
@@ -89,6 +99,13 @@ Item {
         var savedUniqueIdToBlock = [];
         for(var i= 0 ; i < blocks.length ; ++i) {
             var serBlock = blocks[i];
+            if(serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock) {
+                var ioBlock = ioBlocks[serBlock.blockProto.displayName];
+                savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = ioBlock;
+                ioBlock.x = serBlock.blockProto.x;
+                ioBlock.y = serBlock.blockProto.y;
+                continue;
+            }
 
             var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
             newBlock.uniqueId += startUniqueId;
@@ -124,6 +141,8 @@ Item {
             if( connectionComponent.status == Component.Error )
                 console.debug("Error: "+ connectionComponent.errorString() );
         }
+        root.ioBlocks = {};
+        root.classMap = {};
         for(var inputs in root.input) {
             createDynamicInputBlock(root.input[inputs], function(innerBlock) {
                 var propName = root.input[inputs];
@@ -204,6 +223,8 @@ Item {
                 preventStealing: true
                 property var dragStartSlot: null
                 property var connections
+                property real mouseXLastClick
+                property real mouseYLastClick
                 Component.onCompleted: connections = {}
                 anchors.fill: parent
                 function getSlotAtMouse() {
@@ -224,9 +245,11 @@ Item {
                     return null;
                 }
                 hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+
                 onClicked: {
-                    forceActiveFocus();
-                    mouse.accepted = false;
+                    //forceActiveFocus();
+                    //mouse.accepted = false;
                 }
                 onMouseXChanged: {
                     previewConnection.lineEnd = {x:mouseX, y:mouseY};
@@ -246,20 +269,28 @@ Item {
                 }
 
                 onPressed: {
-                    forceActiveFocus();
                     var slot = getSlotAtMouse();
                     if( slot ) {
+                        forceActiveFocus();
                         dragStartSlot = slot;
                         var xy = fullScreenMouseArea.mapFromItem(slot, slot.width*0.5, slot.height*0.5);
                         previewConnection.lineStart = xy;
                     }
                     else
                     {
-                        mouse.accepted = false;
+                        if (mouse.button === Qt.RightButton)
+                        {
+                            mouseXLastClick = mouseX;
+                            mouseYLastClick = mouseY;
+                            ctxMenu.visible = true;
+                        } else {
+                            ctxMenu.visible = false;
+                            forceActiveFocus();
+                        }
                     }
                 }
                 onReleased: {
-                    forceActiveFocus();
+                    //forceActiveFocus();
                     var slot = getSlotAtMouse();
                     if( slot && dragStartSlot) {
                         createConnection(dragStartSlot, slot);
@@ -357,6 +388,16 @@ Item {
                 z: 1
                 id: previewConnection
                 visible: fullScreenMouseArea.dragStartSlot != null
+            }
+            ContextMenu {
+                id: ctxMenu
+                x: fullScreenMouseArea.mouseXLastClick
+                y: fullScreenMouseArea.mouseYLastClick
+                z: 900
+                width: 200
+                height: 200
+                visible: false
+                blocksModel: root.blocksModel
             }
         }
     }

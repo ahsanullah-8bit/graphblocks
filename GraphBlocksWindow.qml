@@ -7,9 +7,21 @@ import FileIO 1.0
 
 ApplicationWindow {
     title: qsTr("GraphBlocks")
-
+    id: root
     property alias control: graphBlockControl
 
+    ListModel {
+        id: blocksModel
+    }
+
+    function importLibrary(name, lib) {
+        var blocks = lib.children;
+        for(var i=0 ; i < blocks.length ; ++i) {
+            var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
+            graphBlockControl.classMap[cn] = blocks[i];
+            blocksModel.append(blocks[i]);
+        }
+    }
     menuBar: MenuBar {
         Menu {
             title: qsTr("&File")
@@ -66,24 +78,33 @@ ApplicationWindow {
             var ser = openFile.read();
             //console.log( "file: " + ser );
             graphBlockControl.clear();
-            graphBlockControl.loadGraph( JSON.parse( ser ), graphBlockView.classMap, {x:0, y:0} );
+            graphBlockControl.loadGraph( JSON.parse( ser ), {x:0, y:0} );
         }
     }
     FileIO {
         id: openFile
         onError: console.log(msg)
     }
+    GraphBlocksBasicLibrary {
+        id: basicLib
+    }
     RowLayout {
         anchors.fill: parent
+
         GraphBlocksBlocksListView {
             id: graphBlockView
             Layout.fillHeight: true
             width: 100
+            blocksModel: blocksModel
+            Component.onCompleted: {
+                importLibrary("basic", basicLib);
+            }
         }
         GraphBlocksGraphControl {
             id: graphBlockControl
             Layout.fillHeight: true
             Layout.fillWidth: true
+            blocksModel: blocksModel
         }
     }
 }

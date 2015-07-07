@@ -8,5 +8,7 @@
         <file>theme/qmldir</file>
         <file>theme/ColorTheme.qml</file>
         <file>GraphBlocksWindow.qml</file>
+        <file>GraphBlocksBasicLibrary.qml</file>
+        <file>ContextMenu.qml</file>
     </qresource>
 </RCC>
