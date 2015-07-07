@@ -14,6 +14,7 @@ Item {
 
     property var classMap
     property alias blocksModel: ctxMenu.blocksModel
+    //property ListModel blocksModel: ListModel { }
 
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
     property Component connectionComponent: Qt.createComponent("GraphBlocksConnection.qml")
@@ -208,15 +209,28 @@ Item {
                         drop.accepted = false;
                         return;
                     }
+//                    var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x, drop.source.y);
+//                    var newBlock = root.blockComponent.createObject(parentForBlocks, {x: xy.x, y: xy.y, uniqueId:root.nextUniqueId});
+//                    root.nextUniqueId++;
+//                    var newBlockInner = drop.source.myCompo.createObject(newBlock.parentForInner, {});
+//                    newBlock.inner = newBlockInner;
+//                    newBlock.displayName = drop.source.text;
+//                    newBlock.className = drop.source.currentClassName;
                     var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x, drop.source.y);
-                    var newBlock = root.blockComponent.createObject(parentForBlocks, {x: xy.x, y: xy.y, uniqueId:root.nextUniqueId});
-                    root.nextUniqueId++;
-                    var newBlockInner = drop.source.myCompo.createObject(newBlock.parentForInner, {});
-                    newBlock.inner = newBlockInner;
-                    newBlock.displayName = drop.source.text;
-                    newBlock.className = drop.source.currentClassName;
+                    zoomer.createBlock(drop.source.currentClassName, xy.x, xy.y);
                 }
             }
+            function createBlock(className, x, y) {
+                var newBlock = root.blockComponent.createObject(parentForBlocks, {x: x, y: y, uniqueId:root.nextUniqueId});
+                root.nextUniqueId++;
+                var blockItem = root.classMap[className];
+                var blockCompo = blockItem.compo;
+                var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
+                newBlock.inner = newBlockInner;
+                newBlock.displayName = blockItem.displayName;
+                newBlock.className = blockItem.className?blockItem.className:blockItem.displayName;
+            }
+
             MouseArea {
                 z:7
                 id: fullScreenMouseArea
@@ -260,11 +274,15 @@ Item {
                     previewConnection.requestPaint();
                 }
                 onWheel: {
+                    if(!focus) {
+                        return;
+                    }
+
                     var oldScale = zoomer.myScale
                     var maxZoom = Math.max(flickable.width/zoomer.width, flickable.height/zoomer.height);
                     zoomer.myScale = Math.max(Math.min(zoomer.myScale + wheel.angleDelta.y*0.0005, 1.0), maxZoom);
-                    flickable.contentX += (mouseX)*(zoomer.myScale-oldScale);
-                    flickable.contentY += (mouseY)*(zoomer.myScale-oldScale);
+                    flickable.contentX += mouseX*(zoomer.myScale-oldScale);
+                    flickable.contentY += mouseY*(zoomer.myScale-oldScale);
                     flickable.returnToBounds();
                 }
 
@@ -282,9 +300,10 @@ Item {
                         {
                             mouseXLastClick = mouseX;
                             mouseYLastClick = mouseY;
-                            ctxMenu.visible = true;
-                        } else {
+                            ctxMenu2.visible = true;
                             ctxMenu.visible = false;
+                        } else {
+                            ctxMenu2.visible = false;
                             forceActiveFocus();
                         }
                     }
@@ -383,6 +402,15 @@ Item {
                     slot1.blockOuter.connections.push(newConnection);
                     slot2.blockOuter.connections.push(newConnection);
                 }
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Space) {
+                        mouseXLastClick = mouseX;
+                        mouseYLastClick = mouseY;
+                        ctxMenu.visible = true;
+                        ctxMenu2.visible = false;
+                    }
+                }
             }
             GraphBlocksConnection {
                 z: 1
@@ -397,7 +425,20 @@ Item {
                 width: 200
                 height: 200
                 visible: false
-                blocksModel: root.blocksModel
+                //blocksModel: root.blocksModel
+                onCreateBlock: {
+                    zoomer.createBlock(block.className?block.className:block.displayName, x, y);
+                    visible = false;
+                }
+            }
+            RightClickMenu {
+                id: ctxMenu2
+                x: fullScreenMouseArea.mouseXLastClick
+                y: fullScreenMouseArea.mouseYLastClick
+                z: 900
+                width: 200
+                height: 200
+                visible: false
             }
         }
     }

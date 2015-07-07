@@ -5,12 +5,12 @@ import "qrc:/theme/";
 
 Rectangle {
     id: root
-    property string filterFieldName
-    property ListModel blocksModel <-todo: single model!
+    property ListModel blocksModel: ListModel {}
 
     property ListModel filteredModel: ListModel {}
     property alias selection: lv.currentItem
     property var classMap
+    signal createBlock(var block)
     border.width: 1
     border.color: ColorTheme.contextMenuBorder
     gradient: Gradient {
@@ -26,13 +26,28 @@ Rectangle {
             ff.forceActiveFocus();
         }
         filteredModel.clear();
-        for(var i; i<root.blocksModel.count ; ++i) {
+        for(var i=0; i<root.blocksModel.count ; ++i) {
             filteredModel.append(blocksModel.get(i));
         }
     }
     ColumnLayout {
         anchors.fill: parent
         anchors.bottomMargin: 2
+
+        Keys.onReturnPressed: {
+            root.createBlock(filteredModel.get(lv.currentIndex));
+            event.accepted = true;
+        }
+
+        Keys.onPressed: {
+            if (event.key === Qt.Key_Up) {
+                lv.currentIndex = Math.max(0, lv.currentIndex - 1);
+                event.accepted = true;
+            } else if(event.key === Qt.Key_Down) {
+                lv.currentIndex = lv.currentIndex + 1;
+                event.accepted = true;
+            }
+        }
         TextField {
             Layout.fillWidth: true
             id: ff
@@ -40,12 +55,13 @@ Rectangle {
             onTextChanged: {
                 filteredModel.clear();
                 var re = new RegExp(ff.text);
-                for(var i; i<blocksModel.count ; ++i) {
+                for(var i=0; i<blocksModel.count ; ++i) {
                     var block = blocksModel.get(i);
                     if(block.displayName.match(re)) {
                         filteredModel.append(block);
                     }
                 }
+                lv.currentIndex = 0;
             }
         }
         ListView {
@@ -56,11 +72,12 @@ Rectangle {
             model: filteredModel
             delegate: Text {
                 text: displayName
-                color: "black"
-//                visible: {
-//                    var re = new RegExp(ff.text);
-//                    return displayName.match(re);
-//                }
+                color: lv.currentIndex===index?"grey":"black"
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: lv.currentIndex = index
+                    onDoubleClicked: root.createBlock(filteredModel.get(lv.currentIndex))
+                }
             }
         }
     }

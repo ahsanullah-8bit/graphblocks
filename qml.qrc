@@ -10,5 +10,6 @@
         <file>GraphBlocksWindow.qml</file>
         <file>GraphBlocksBasicLibrary.qml</file>
         <file>ContextMenu.qml</file>
+        <file>RightClickMenu.qml</file>
     </qresource>
 </RCC>

@@ -11,7 +11,7 @@ ApplicationWindow {
     property alias control: graphBlockControl
 
     ListModel {
-        id: blocksModel
+        id: theBlocksModel
     }
 
     function importLibrary(name, lib) {
@@ -19,7 +19,7 @@ ApplicationWindow {
         for(var i=0 ; i < blocks.length ; ++i) {
             var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
             graphBlockControl.classMap[cn] = blocks[i];
-            blocksModel.append(blocks[i]);
+            theBlocksModel.append(blocks[i]);
         }
     }
     menuBar: MenuBar {
@@ -95,7 +95,7 @@ ApplicationWindow {
             id: graphBlockView
             Layout.fillHeight: true
             width: 100
-            blocksModel: blocksModel
+            blocksModel: theBlocksModel
             Component.onCompleted: {
                 importLibrary("basic", basicLib);
             }
@@ -104,7 +104,7 @@ ApplicationWindow {
             id: graphBlockControl
             Layout.fillHeight: true
             Layout.fillWidth: true
-            blocksModel: blocksModel
+            blocksModel: theBlocksModel
         }
     }
 }
