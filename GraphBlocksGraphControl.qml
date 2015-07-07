@@ -319,14 +319,15 @@ Item {
                         var theSignal = outp.block["on"+chSigNam+"Changed"];
                         // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
                         // no check is added here for performance
+                        //Todo: other lazy behaviour: wait before sending first signal!
                         var fn;
                         if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
-                            var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000
                             fn = function() {
                                 if( inp.lazyConnectTimer.running ) {
                                     return;
                                 }
                                 var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
+                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
                                 if(timediff >= lazyInterval) {
                                     inp.block[inp.propName] = outp.block[outp.propName];
                                     inp.lazyConnectTimer.lastConnect = Date.now();
