@@ -262,8 +262,8 @@ Item {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                 onClicked: {
-                    //forceActiveFocus();
-                    //mouse.accepted = false;
+                    forceActiveFocus();
+                    mouse.accepted = false;
                 }
                 onMouseXChanged: {
                     previewConnection.lineEnd = {x:mouseX, y:mouseY};
@@ -285,7 +285,7 @@ Item {
                     flickable.contentY += mouseY*(zoomer.myScale-oldScale);
                     flickable.returnToBounds();
                 }
-
+                propagateComposedEvents: true
                 onPressed: {
                     var slot = getSlotAtMouse();
                     if( slot ) {
@@ -298,13 +298,13 @@ Item {
                     {
                         if (mouse.button === Qt.RightButton)
                         {
-                            mouseXLastClick = mouseX;
-                            mouseYLastClick = mouseY;
-                            ctxMenu2.visible = true;
+                            mouseXLastClick = mouse.x;
+                            mouseYLastClick = mouse.y;
+                            //ctxMenu2.visible = true;
                             ctxMenu.visible = false;
                         } else {
                             ctxMenu2.visible = false;
-                            forceActiveFocus();
+                            //forceActiveFocus();
                         }
                     }
                 }
@@ -437,8 +437,15 @@ Item {
                 y: fullScreenMouseArea.mouseYLastClick
                 z: 900
                 width: 200
-                height: 200
+                //height: 200
                 visible: false
+                options: [
+                    { name: "nothing",
+                        action: function() {
+                            console.log("activated");
+                        }
+                    }
+                ]
             }
         }
     }

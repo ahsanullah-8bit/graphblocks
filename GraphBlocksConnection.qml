@@ -130,28 +130,54 @@ Canvas {
         ctx.stroke();
     }
     MouseArea {
+        z: 700
         id: conMa
         anchors.fill: parent
         property bool isOver
-
-        onClicked: {
+        propagateComposedEvents: true
+        function isOverCon(x, y) {
             var sx = lineStart.x - canvas.x + 2;
             var sy = lineStart.y - canvas.y + 2;
             var ex = lineEnd.x - canvas.x + 2 - sx;
             var ey = lineEnd.y - canvas.y + 2 - sy;
-            var mx = mouseX - sx;
-            var my = mouseY - sy;
+            var mx = x - sx;
+            var my = y - sy;
             var len = Math.sqrt(ex*ex + ey*ey);
             var nx = ex/len;
             var ny = ey/len;
-            var dot = nx*mx+ny*my;
+            var dot = nx*mx + ny*my;
             var ox = nx*dot - mx;
             var oy = ny*dot - my;
             var d = Math.sqrt(ox*ox + oy*oy);
-            isOver = d < 5.0;
-            if(isOver) {
+            return d < 5.0;
+        }
+        onClicked: {
+            if(!conMa.isOverCon(mouse.x, mouse.y))
+                return;
+            if (mouse.button === Qt.LeftButton) {
                 parent.forceActiveFocus();
+                mouse.accepted = true;
+            }
+            else if (mouse.button === Qt.RightButton) {
+                ctxMenuCon.x = mouse.x;
+                ctxMenuCon.y = mouse.y;
+                ctxMenuCon.forceActiveFocus();
+                mouse.accepted = true;
             }
         }
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+    }
+    //TODO: make context menu a function from <strike>fullScreenMA</strike> with only options exchanged. (not fsma, because it would result in element over and under blocks
+    RightClickMenu {
+        id: ctxMenuCon
+        z: 900
+        width: 200
+        visible: focus
+        options: [
+            {
+                name: "Create Shortcut",
+                action: function() { console.log("create shcut");}
+            }
+        ]
     }
 }

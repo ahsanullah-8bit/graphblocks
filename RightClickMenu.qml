@@ -3,37 +3,46 @@ import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.1
 import "qrc:/theme/";
 
-//TODO
-Rectangle {
+Item {
     id: root
-    property ListModel optionsModel: ListModel {}
-
-    signal createLink(var block)
-    border.width: 1
-    border.color: ColorTheme.contextMenuBorder
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: ColorTheme.contextMenu1}
-        GradientStop { position: 1.0; color: ColorTheme.contextMenu2}
-    }
+    property var options
     onXChanged: reinit()
     onYChanged: reinit()
     onVisibleChanged: reinit()
+    height: lv.height
+    Rectangle {
+        z:800
+        anchors.fill: parent
+        border.width: 1
+        border.color: ColorTheme.contextMenuBorder
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: ColorTheme.contextMenu1}
+            GradientStop { position: 1.0; color: ColorTheme.contextMenu2}
+        }
+    }
     function reinit() {
         if(visible) {
             lv.forceActiveFocus();
         }
+        lv.model.clear();
+        for( var i in options) {
+            if(options.hasOwnProperty(i)) {
+                lv.model.append(options[i]);
+            }
+        }
     }
     ListView {
-        anchors.fill: parent
-        clip: true
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: model.count * 20
         id: lv
-        model: optionsModel
+        z:900
+        clip: true
+        model: ListModel {}
         delegate: Text {
-            text: displayName
+            text: name
             color: lv.currentIndex===index?"grey":"black"
         }
     }
 }
-
