@@ -1,16 +1,18 @@
 #include <QApplication>
 #include <QQmlApplicationEngine>
-#include "fileio.h"
 #include <qqml.h>
+#include <QResource>
+#include <QDebug>
+#include <graphblocks.h>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    qmlRegisterType<FileIO, 1>("FileIO", 1, 0, "FileIO");
+    initializeGraphBlocks();
 
     QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
     return app.exec();
 }

@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import "qrc:/theme/";
+import "qrc:/qml/theme/";
 
 Canvas {
     id:canvas
@@ -64,7 +64,7 @@ Canvas {
 
     Keys.onPressed: {
         if (event.key === Qt.Key_Delete) {
-            destroy(1000);
+            destroy(0); //why delayed?
             event.accepted = true;
         }
     }
@@ -152,8 +152,10 @@ Canvas {
             return d < 5.0;
         }
         onClicked: {
-            if(!conMa.isOverCon(mouse.x, mouse.y))
+            if(!conMa.isOverCon(mouse.x, mouse.y)) {
+                mouse.accepted = false;
                 return;
+            }
             if (mouse.button === Qt.LeftButton) {
                 parent.forceActiveFocus();
                 mouse.accepted = true;

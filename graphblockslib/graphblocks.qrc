@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/GraphBlocksGraphControl.qml</file>
+        <file>qml/GraphBlocksBlocksListView.qml</file>
+        <file>qml/GraphBlocksBlock.qml</file>
+        <file>qml/GraphBlocksConnection.qml</file>
+        <file>qml/theme/qmldir</file>
+        <file>qml/theme/ColorTheme.qml</file>
+        <file>qml/GraphBlocksWindow.qml</file>
+        <file>qml/GraphBlocksBasicLibrary.qml</file>
+        <file>qml/ContextMenu.qml</file>
+        <file>qml/RightClickMenu.qml</file>
+    </qresource>
+</RCC>

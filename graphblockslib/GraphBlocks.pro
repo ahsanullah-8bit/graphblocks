@@ -17,4 +17,5 @@ HEADERS += \
     fileio.h
 
 DISTFILES += \
-    README.txt
+    README.txt \
+    CMakeLists.txt

@@ -16,20 +16,17 @@ ApplicationWindow {
         hoverEnabled: true
     }
     ColumnLayout {
-        anchors.fill: parent
         Button {
-            text: gbw.myValue
+            text: "[]--[]"
             GraphBlocksWindow {
                 id: gbw
-                control.input: ["mouseCoordX", "mouseCoordY", "mouseCoordXRand"]
-                control.output: ["myValue", "ballX", "ballY"]
+                control.input: ["mouseCoordX", "mouseCoordY"]
+                control.output: ["ballX", "ballY"]
                 control.sourceElement: gbw
-                property real myValue
                 property real ballX
                 property real ballY
                 property real mouseCoordX: ma.mouseX
                 property real mouseCoordY: ma.mouseY
-                property real mouseCoordXRand: ma.mouseX + 100
                 visible: false
                 width: 800
                 height: 500

@@ -2,7 +2,7 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.4
-import "qrc:/theme/";
+import "qrc:/qml/theme/";
 
 Item {
     id: root

@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.1
-import "qrc:/theme/";
+import "qrc:/qml/theme/";
 
 Rectangle {
     id: root
@@ -14,8 +14,8 @@ Rectangle {
     border.width: 1
     border.color: ColorTheme.contextMenuBorder
     gradient: Gradient {
-        GradientStop { position: 0.0; color: ColorTheme.contextMenu1}
-        GradientStop { position: 1.0; color: ColorTheme.contextMenu2}
+        GradientStop { position: 0.0; color: ColorTheme.contextMenu1 }
+        GradientStop { position: 1.0; color: ColorTheme.contextMenu2 }
     }
     onXChanged: reinit()
     onYChanged: reinit()

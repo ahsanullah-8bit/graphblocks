@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import "qrc:/theme/";
+import "qrc:/qml/theme/";
 
 Item {
     id: root
@@ -93,7 +93,7 @@ Item {
         ioBlocks[newBlock.displayName] = newBlock;
     }
 
-    function loadGraph(obj, classMap, offset) {
+    function loadGraph(obj, offset) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
         var connections = obj.connections;
@@ -111,10 +111,14 @@ Item {
             var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
             newBlock.uniqueId += startUniqueId;
             nextUniqueId = Math.max(nextUniqueId, newBlock.uniqueId);
-            var compo = classMap[blocks[i].blockProto.className];
+            var compo = root.classMap[blocks[i].blockProto.className];
             if(!compo) {
                 console.log("ERROR: graph could not be loaded due to unknown block type: \"" + blocks[i].blockProto.className + "\"");
                 newBlock.inner = "ERROR";
+                console.log("loaded blocktypes:");
+                for(var nam in root.classMap) {
+                    console.log(nam);
+                }
             } else {
                 var newBlockInner = compo.compo.createObject(newBlock.parentForInner, serBlock.innerProto);
                 newBlock.inner = newBlockInner;
@@ -143,7 +147,7 @@ Item {
                 console.debug("Error: "+ connectionComponent.errorString() );
         }
         root.ioBlocks = {};
-        root.classMap = {};
+        //root.classMap = {};
         for(var inputs in root.input) {
             createDynamicInputBlock(root.input[inputs], function(innerBlock) {
                 var propName = root.input[inputs];
@@ -260,9 +264,9 @@ Item {
                 }
                 hoverEnabled: true
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
+                propagateComposedEvents: true
 
                 onClicked: {
-                    forceActiveFocus();
                     mouse.accepted = false;
                 }
                 onMouseXChanged: {
@@ -285,7 +289,6 @@ Item {
                     flickable.contentY += mouseY*(zoomer.myScale-oldScale);
                     flickable.returnToBounds();
                 }
-                propagateComposedEvents: true
                 onPressed: {
                     var slot = getSlotAtMouse();
                     if( slot ) {
@@ -294,18 +297,16 @@ Item {
                         var xy = fullScreenMouseArea.mapFromItem(slot, slot.width*0.5, slot.height*0.5);
                         previewConnection.lineStart = xy;
                     }
-                    else
+                    else if (mouse.button === Qt.RightButton)
                     {
-                        if (mouse.button === Qt.RightButton)
-                        {
-                            mouseXLastClick = mouse.x;
-                            mouseYLastClick = mouse.y;
-                            //ctxMenu2.visible = true;
-                            ctxMenu.visible = false;
-                        } else {
-                            ctxMenu2.visible = false;
-                            //forceActiveFocus();
-                        }
+                        mouseXLastClick = mouse.x;
+                        mouseYLastClick = mouse.y;
+                        //ctxMenu2.visible = true;
+                        ctxMenu.visible = false;
+                    } else {
+                        ctxMenu2.visible = false;
+                        forceActiveFocus();
+                        mouse.accepted = false;
                     }
                 }
                 onReleased: {
