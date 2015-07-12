@@ -33,6 +33,9 @@ ApplicationWindow {
     function loadGraph(json, x, y) {
         graphBlockControl.loadGraph( json, {x:x, y:y} );
     }
+    function loadGraphAsSuperblock(json, x, y) {
+        graphBlockControl.loadGraphAsSuperblock( json, {x:x, y:y} );
+    }
     function saveGraph(json, x, y) {
         return graphBlockControl.saveGraph();
     }

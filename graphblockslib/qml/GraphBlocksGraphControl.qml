@@ -135,6 +135,9 @@ Item {
             fullScreenMouseArea.createConnection(s1, s2);
         }
     }
+    function loadGraphAsSuperblock(obj, offset) {
+
+    }
     Component.onCompleted: {
         if( blockComponent.status != Component.Ready )
         {

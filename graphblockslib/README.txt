@@ -4,7 +4,7 @@
 * Highlight for connectible slots
 * import files
 * multi selection
-* multi-slot (one new slot becomes appearent when previevs have been assigned)
+* multi-slot (one new slot becomes appearent when previews have been assigned)
 * super-block
 * input blocks / output blocks (not deletable, not editable)
 * component to hook graph in application for values, functions, ...
