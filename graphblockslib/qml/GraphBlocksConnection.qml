@@ -9,6 +9,16 @@ Canvas {
     property var lineEnd: slot2 ? parent.mapFromItem(slot2, slot2.width*0.5, slot2.height*0.5) : {}
     property var slotFunc
     property var startSignal
+    Item {
+        id: priv
+        property var points: []
+    }
+    function addPoint(var p) {
+        priv.points.push(p);
+        var newX = Math.min(lineStart.x, lineEnd.x);
+        x = Math.min
+    }
+
     x: Math.min(lineStart.x, lineEnd.x)-2;
     y: Math.min(lineStart.y, lineEnd.y)-2;
     z: 1
