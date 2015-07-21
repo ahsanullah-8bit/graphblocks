@@ -18,13 +18,9 @@ ApplicationWindow {
         if(typeof graphBlockControl.classMap === "undefined") {
             graphBlockControl.classMap = {};
         }
-        console.log(lib);
         var blocks = lib.children;
         for(var i=0 ; i < blocks.length ; ++i) {
-            console.log(blocks[i] + " -> " );
             var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
-            console.log(" -> " + cn);
-            console.log(" -> " + graphBlockControl.classMap[cn]);
             graphBlockControl.classMap[cn] = blocks[i];
             theBlocksModel.append(blocks[i]);
         }
