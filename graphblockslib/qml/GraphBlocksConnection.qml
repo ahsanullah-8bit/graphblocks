@@ -13,11 +13,12 @@ Canvas {
         id: priv
         property var points: []
     }
-    function addPoint(var p) {
-        priv.points.push(p);
-        var newX = Math.min(lineStart.x, lineEnd.x);
-        x = Math.min
-    }
+    //Todo: support "points" so graphs do not look so messy
+//    function addPoint(var p) {
+//        priv.points.push(p);
+//        var newX = Math.min(lineStart.x, lineEnd.x);
+//        x = Math.min
+//    }
 
     x: Math.min(lineStart.x, lineEnd.x)-2;
     y: Math.min(lineStart.y, lineEnd.y)-2;
