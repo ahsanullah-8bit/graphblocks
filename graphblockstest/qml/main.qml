@@ -10,6 +10,7 @@ ApplicationWindow {
     width: 640
     height: 480
     visible: true
+    id: drawingArea
     MouseArea {
         id:ma
         anchors.fill: parent
@@ -30,6 +31,14 @@ ApplicationWindow {
                 visible: false
                 width: 800
                 height: 500
+                Component.onCompleted: {
+                    console.log("regegege");
+                    gbw.importLibrary("Draw", drawLib);
+                }
+                DrawingLibrary {
+                    id: drawLib
+                    canvas: drawingArea
+                }
             }
             onClicked: gbw.visible = !gbw.visible
         }

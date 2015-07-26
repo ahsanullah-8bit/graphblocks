@@ -60,14 +60,14 @@ Item {
         return objToSerialize;
     }
     Component {
-        id: dynamicBlockInpCompo
+        id: blockInpCompo
         Item {
             property var output: ["outp"]
             property var outp
         }
     }
     Component {
-        id: dynamicBlockOutpCompo
+        id: blockOutpCompo
         Item {
             property var input: ["inp"]
             property var inp
@@ -75,22 +75,29 @@ Item {
     }
     property real nextInY: 100
     property real nextOutY: 100
-    function createDynamicInputBlock(displayName, setupInner) {
-        createDynamicBlock(dynamicBlockInpCompo, {x: 100, y: nextInY, displayName: "in_"+displayName, editable: false, isInputBlock: true}, setupInner);
+    function createInputBlock(displayName, setupInner) {
+        var newBlock = createSpecialBlock(blockInpCompo, {x: 100, y: nextInY, displayName: displayName, editable: false, isInputBlock: true}, setupInner);
         nextInY += 50;
+        ioBlocks[displayName] = newBlock; // ioBlocks is used to identify block when file is loaded (in/out blocks persist!)
     }
-    function createDynamicOutputBlock(displayName, setupInner) {
-        createDynamicBlock(dynamicBlockOutpCompo, {x: 400, y: nextOutY, displayName: "out_"+displayName, editable: false, isOutputBlock: true}, setupInner);
+    function createOutputBlock(displayName, setupInner) {
+        var newBlock = createSpecialBlock(blockOutpCompo, {x: 400, y: nextOutY, displayName: displayName, editable: false, isOutputBlock: true}, setupInner);
         nextOutY += 50;
+        ioBlocks[displayName] = newBlock;
     }
-    function createDynamicBlock(dynamicBlockCompo, proto, setupInner) {
+    function createDynamicBlock(displayName, xp, yp, displayName ) {
+        var newBlock = createSpecialBlock(blockOutpCompo, {x: xp, y: yp, displayName: displayName}, {});
+        return newBlock.inner;
+    }
+
+    function createSpecialBlock(blockCompo, proto, setupInner) {
         var newBlock = root.blockComponent.createObject(parentForBlocks, proto);
         newBlock.uniqueId += nextUniqueId;
         nextUniqueId++;
-        var newBlockInner = dynamicBlockCompo.createObject(newBlock.parentForInner, {});
+        var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
         setupInner(newBlockInner);
         newBlock.inner = newBlockInner;
-        ioBlocks[newBlock.displayName] = newBlock;
+        return newBlock;
     }
 
     function loadGraph(obj, offset) {
@@ -152,7 +159,8 @@ Item {
         root.ioBlocks = {};
         //root.classMap = {};
         for(var inputs in root.input) {
-            createDynamicInputBlock(root.input[inputs], function(innerBlock) {
+            var dn = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
+            createInputBlock(dn, function(innerBlock) {
                 var propName = root.input[inputs];
                 var chSigNam = propName.charAt(0).toUpperCase();
                 chSigNam += propName.substring(1);
@@ -161,7 +169,8 @@ Item {
             });
         }
         for(var outputs in root.output) {
-            createDynamicOutputBlock(root.output[outputs], function(innerBlock) {
+            var dn = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
+            createOutputBlock(dn, function(innerBlock) {
                 var myOut = outputs;
                 innerBlock.onInpChanged.connect(function() {
                     root.sourceElement[root.output[myOut]] = innerBlock.inp;
