@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>qml/main.qml</file>
         <file>qml/GraphBlocksGraphControl.qml</file>
         <file>qml/GraphBlocksBlocksListView.qml</file>
         <file>qml/GraphBlocksBlock.qml</file>

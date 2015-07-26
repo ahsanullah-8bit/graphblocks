@@ -32,7 +32,6 @@ ApplicationWindow {
                 width: 800
                 height: 500
                 Component.onCompleted: {
-                    console.log("regegege");
                     gbw.importLibrary("Draw", drawLib);
                 }
                 DrawingLibrary {
@@ -50,6 +49,6 @@ ApplicationWindow {
         radius: 5
         width: 10
         height: 10
-        color: "green"
+        color: "red"
     }
 }

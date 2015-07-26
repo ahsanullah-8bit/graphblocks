@@ -13,28 +13,28 @@ Item {
         property var compo: Component {
             Item {
                 id: rectItem
-                property var input: ["posX","posY", "radius", "width", "height"]
+                property var input: ["posX","posY", "radius", "rectWidth", "rectHeight"]
                 property real posX
                 property real posY
                 property real radius
-                property real width
-                property real height
+                property real rectWidth
+                property real rectHeight
                 Component.onCompleted: {
                     theRect.createObject(drawLib.canvas, {});
                 }
                 Component {
                     id: theRect
-                    property real posX: rectItem.posX
-                    property real posY: rectItem.posY
-                    property real radius: rectItem.radius
-                    property real width: rectItem.width
-                    property real height: rectItem.height
+                    //property real posX: rectItem.posX
+                    //property real posY: rectItem.posY
+                    //property real radius: rectItem.radius
+                    //property real width: rectItem.rectWidth
+                    //property real height: rectItem.rectHeight
                     Rectangle {
-                        x: theRect.posX
-                        y: theRect.posY
-                        radius: theRect.radius
-                        width: theRect.width
-                        height: theRect.height
+                        x: rectItem.posX
+                        y: rectItem.posY
+                        radius: rectItem.radius
+                        width: rectItem.rectWidth
+                        height: rectItem.rectHeight
                         color: "blue"
                     }
                 }
