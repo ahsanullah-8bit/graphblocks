@@ -76,12 +76,12 @@ Item {
     property real nextInY: 100
     property real nextOutY: 100
     function createInputBlock(displayName, setupInner) {
-        var newBlock = createSpecialBlock(blockInpCompo, {x: 100, y: nextInY, displayName: displayName, editable: false, isInputBlock: true}, setupInner);
+        var newBlock = createSpecialBlock(blockInpCompo, {x: 100, y: nextInY, displayName: displayName, className: "in_"+displayName, editable: false, isInputBlock: true}, setupInner);
         nextInY += 50;
         ioBlocks[displayName] = newBlock; // ioBlocks is used to identify block when file is loaded (in/out blocks persist!)
     }
     function createOutputBlock(displayName, setupInner) {
-        var newBlock = createSpecialBlock(blockOutpCompo, {x: 400, y: nextOutY, displayName: displayName, editable: false, isOutputBlock: true}, setupInner);
+        var newBlock = createSpecialBlock(blockOutpCompo, {x: 400, y: nextOutY, displayName: displayName, className: "out_"+displayName, editable: false, isOutputBlock: true}, setupInner);
         nextOutY += 50;
         ioBlocks[displayName] = newBlock;
     }
@@ -169,7 +169,7 @@ Item {
             });
         }
         for(var outputs in root.output) {
-            var dn = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
+            var dn = root.output[outputs].charAt(0).toUpperCase() + root.output[outputs].slice(1);
             createOutputBlock(dn, function(innerBlock) {
                 var myOut = outputs;
                 innerBlock.onInpChanged.connect(function() {

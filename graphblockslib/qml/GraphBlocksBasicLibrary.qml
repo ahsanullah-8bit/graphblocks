@@ -3,6 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.1
+import "qrc:/qml/theme/";
 
 Item {
     id:allTheBlockTemplates
@@ -325,8 +326,8 @@ Item {
                 SequentialAnimation on result {
                     running: true
                     loops: Animation.Infinite
-                    PropertyAnimation { from: 0; to: 1; easing.type: Easing.SineCurve }
-                    PropertyAnimation { from: 1; to: 0; easing.type: Easing.SineCurve }
+                    PropertyAnimation { from: 0; to: 1; duration: 2000; easing.type: Easing.SineCurve }
+                    //PropertyAnimation { from: 1; to: 0; duration: 2000; easing.type: Easing.SineCurve }
                 }
                 text: result.toFixed(4)
                 height: 20
