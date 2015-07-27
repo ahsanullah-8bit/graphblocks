@@ -9,6 +9,9 @@ Canvas {
     property var lineEnd: slot2 ? parent.mapFromItem(slot2, slot2.width*0.5, slot2.height*0.5) : {}
     property var slotFunc
     property var startSignal
+    property var contextMenu
+    property real clickThickness: 8 // resizes the element when it is perfectly horizontal/vertical
+    property real clickThicknessDiagonal: 10 // used for diagonal lines (can be bigger)
     Item {
         id: priv
         property var points: []
@@ -20,11 +23,11 @@ Canvas {
 //        x = Math.min
 //    }
 
-    x: Math.min(lineStart.x, lineEnd.x)-2;
-    y: Math.min(lineStart.y, lineEnd.y)-2;
+    x: Math.min(lineStart.x, lineEnd.x)-clickThickness;
+    y: Math.min(lineStart.y, lineEnd.y)-clickThickness;
     z: 1
-    width: Math.abs(lineEnd.x-lineStart.x)+4;
-    height: Math.abs(lineEnd.y-lineStart.y)+4;
+    width: Math.abs(lineEnd.x-lineStart.x)+clickThickness*2;
+    height: Math.abs(lineEnd.y-lineStart.y)+clickThickness*2;
     onXChanged: requestPaint()
     onYChanged: requestPaint()
     onWidthChanged: requestPaint()
@@ -127,16 +130,16 @@ Canvas {
 
     onPaint: {
         var ctx = canvas.getContext('2d');
-        ctx.clearRect(2, 2, width-4, height-4);
+        ctx.clearRect(clickThickness, clickThickness, width-clickThickness*2, height-clickThickness*2);
         if( focus ) {
             ctx.strokeStyle = ColorTheme.connectionColorHighlight;// 'rgba(255,0,0,255)';
         } else {
             ctx.strokeStyle = ColorTheme.connectionColor;// 'rgba(255,255,0,255)';
         }
-
+        //ctx.lineWidth = clickThickness;
         ctx.beginPath();
-        ctx.moveTo(lineStart.x - x + 2, lineStart.y - y + 2);
-        ctx.lineTo(lineEnd.x - x + 2, lineEnd.y - y + 2);
+        ctx.moveTo(lineStart.x - x, lineStart.y - y);
+        ctx.lineTo(lineEnd.x - x, lineEnd.y - y);
         ctx.closePath();
         ctx.stroke();
     }
@@ -147,10 +150,10 @@ Canvas {
         property bool isOver
         propagateComposedEvents: true
         function isOverCon(x, y) {
-            var sx = lineStart.x - canvas.x + 2;
-            var sy = lineStart.y - canvas.y + 2;
-            var ex = lineEnd.x - canvas.x + 2 - sx;
-            var ey = lineEnd.y - canvas.y + 2 - sy;
+            var sx = lineStart.x - canvas.x;
+            var sy = lineStart.y - canvas.y;
+            var ex = lineEnd.x - canvas.x - sx;
+            var ey = lineEnd.y - canvas.y - sy;
             var mx = x - sx;
             var my = y - sy;
             var len = Math.sqrt(ex*ex + ey*ey);
@@ -160,7 +163,7 @@ Canvas {
             var ox = nx*dot - mx;
             var oy = ny*dot - my;
             var d = Math.sqrt(ox*ox + oy*oy);
-            return d < 5.0;
+            return d < clickThicknessDiagonal;
         }
         onClicked: {
             if(!conMa.isOverCon(mouse.x, mouse.y)) {
@@ -172,24 +175,24 @@ Canvas {
                 mouse.accepted = true;
             }
             else if (mouse.button === Qt.RightButton) {
-                ctxMenuCon.x = mouse.x;
-                ctxMenuCon.y = mouse.y;
-                ctxMenuCon.forceActiveFocus();
+                var ctxPos = mapToItem(contextMenu.parent, mouse.x, mouse.y);
+                contextMenu.showOptions( canvas, contextMenuOptions, ctxPos.x, ctxPos.y );
                 mouse.accepted = true;
             }
         }
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-    }
-    //TODO: make context menu a function from <strike>fullScreenMA</strike> with only options exchanged. (not fsma, because it would result in element over and under blocks
-    RightClickMenu {
-        id: ctxMenuCon
-        z: 900
-        width: 200
-        visible: focus
-        options: [
+        property var contextMenuOptions: [
             {
                 name: "Create Shortcut",
-                action: function() { console.log("create shcut");}
+                action: function( data ) { console.log("create shcut");}
+            },
+            {
+                name: "Add Point",
+                action: function( data ) { console.log("point added");}
+            },
+            {
+                name: "Remove",
+                action: function( data ) { console.log("connection removed");}
             }
         ]
     }

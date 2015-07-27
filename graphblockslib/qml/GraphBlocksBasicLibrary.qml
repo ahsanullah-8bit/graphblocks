@@ -144,36 +144,48 @@ Item {
         id: blockLazyPassThrough
         property string displayName: "Lazy Pass"
         property var compo: Component {
-            TextField {
-                id: textField
+            RowLayout {
+                id: innerRoot
                 property bool lazyConnect: true
-                property real lazyInterval: 5000
+                property real lazyInterval: 500
+                property bool onlyResting: false
                 property var lazyInputProps: ["inp"]
-                property var input: ["inp", "lazyInterval"]
+                property var input: ["inp", "lazyInterval", "onlyResting"]
                 property var output: ["outp"]
                 property var inp
                 property var outp: inp
-                height: 24
-                text: "5000"
-                onLazyIntervalChanged: text = lazyInterval;
-                onEditingFinished: lazyInterval = parseInt(text)
-                style: TextFieldStyle {
-                    textColor: "black"
-                    background: Rectangle {
-                        radius: 2
-                        implicitWidth: Math.max(20, inviText.width + 10)
-                        implicitHeight: 24
-                        border.color: "#333"
-                        border.width: 1
+                onLazyIntervalChanged: textField.text = lazyInterval;
+                function serialize() {
+                    return { lazyInterval: innerRoot.lazyInterval, onlyResting: innerRoot.onlyResting };
+                }
+                TextField {
+                    id: textField
+                    height: 24
+                    text: "500"
+                    onEditingFinished: innerRoot.lazyInterval = parseInt(text)
+                    style: TextFieldStyle {
+                        textColor: "black"
+                        background: Rectangle {
+                            radius: 2
+                            implicitWidth: Math.max(20, inviText.width + 10)
+                            implicitHeight: 24
+                            border.color: "#333"
+                            border.width: 1
+                        }
+                    }
+                    Text {
+                        id: inviText
+                        visible: false
+                        text: textField.text
                     }
                 }
-                Text {
-                    id: inviText
-                    visible: false
-                    text: textField.text
-                }
-                function serialize() {
-                    return {lazyInterval: textField.lazyInterval}
+                CheckBox {
+                    text: "rest"
+                    id:cbRestingOnly
+                    checked: innerRoot.onlyResting
+                    onCheckedChanged: {
+                        innerRoot.onlyResting = checked;
+                    }
                 }
             }
         }
@@ -216,6 +228,23 @@ Item {
                 function fire() { onFire(); }
                 onClicked: {
                     fire();
+                }
+            }
+        }
+    }
+
+    Item {
+        id: blockFireOnChange
+        property string displayName: "FireOnChange"
+        property var compo: Component {
+            Item {
+                property var input: ["inp"]
+                property var output: ["outp", "onChange"]
+                property var inp
+                property var outp: inp
+                signal onChange()
+                onInpChanged: {
+                    onChange();
                 }
             }
         }

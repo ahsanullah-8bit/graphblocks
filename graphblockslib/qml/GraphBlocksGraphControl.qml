@@ -5,6 +5,8 @@ Item {
     id: root
     z: -100
 
+    property bool isEditingSuperblock: false
+
     property var input
     property var output
 
@@ -93,6 +95,7 @@ Item {
     function createSpecialBlock(blockCompo, proto, setupInner) {
         var newBlock = root.blockComponent.createObject(parentForBlocks, proto);
         newBlock.uniqueId += nextUniqueId;
+        newBlock.contextMenu = globalContextMenu;
         nextUniqueId++;
         var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
         setupInner(newBlockInner);
@@ -117,6 +120,7 @@ Item {
 
             var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
             newBlock.uniqueId += startUniqueId;
+            newBlock.contextMenu = globalContextMenu;
             nextUniqueId = Math.max(nextUniqueId, newBlock.uniqueId);
             var compo = root.classMap[blocks[i].blockProto.className];
             if(!compo) {
@@ -142,9 +146,11 @@ Item {
             fullScreenMouseArea.createConnection(s1, s2);
         }
     }
+
     function loadGraphAsSuperblock(obj, offset) {
 
     }
+
     Component.onCompleted: {
         if( blockComponent.status != Component.Ready )
         {
@@ -239,6 +245,7 @@ Item {
             function createBlock(className, x, y) {
                 var newBlock = root.blockComponent.createObject(parentForBlocks, {x: x, y: y, uniqueId:root.nextUniqueId});
                 root.nextUniqueId++;
+                newBlock.contextMenu = globalContextMenu;
                 var blockItem = root.classMap[className];
                 var blockCompo = blockItem.compo;
                 var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
@@ -311,12 +318,11 @@ Item {
                     }
                     else if (mouse.button === Qt.RightButton)
                     {
+                        globalContextMenu.visible = false;
                         mouseXLastClick = mouse.x;
                         mouseYLastClick = mouse.y;
-                        //ctxMenu2.visible = true;
-                        ctxMenu.visible = false;
                     } else {
-                        ctxMenu2.visible = false;
+                        globalContextMenu.visible = false;
                         forceActiveFocus();
                         mouse.accepted = false;
                     }
@@ -383,26 +389,36 @@ Item {
                         // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
                         // no check is added here for performance
                         //Todo: other lazy behaviour: wait before sending first signal!
-                        var fn;
+                        var fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; };
                         if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
+                            inp.lazyConnectTimer.onTriggered.connect( fn );
                             fn = function() {
-                                if( inp.lazyConnectTimer.running ) {
-                                    return;
-                                }
-                                var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
                                 var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
-                                if(timediff >= lazyInterval) {
-                                    inp.block[inp.propName] = outp.block[outp.propName];
-                                    inp.lazyConnectTimer.lastConnect = Date.now();
+                                var onlyIfNoChange = inp.block.onlyResting; //only set value, if x sec no change occured
+                                if( inp.lazyConnectTimer.running) {
+                                    if( onlyIfNoChange ) {
+                                        inp.lazyConnectTimer.restart();
+                                    }
                                 } else {
-                                    inp.lazyConnectTimer.interval = lazyInterval - timediff;
+                                    inp.lazyConnectTimer.interval = lazyInterval;
                                     inp.lazyConnectTimer.start();
-                                    inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time
                                 }
+//                                if( inp.lazyConnectTimer.running ) {
+//                                    return;
+//                                }
+//                                var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
+//                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
+//                                if(timediff >= lazyInterval) {
+//                                    inp.block[inp.propName] = outp.block[outp.propName];
+//                                    inp.lazyConnectTimer.lastConnect = Date.now();
+//                                } else {
+//                                    inp.lazyConnectTimer.interval = lazyInterval - timediff;
+//                                    inp.lazyConnectTimer.start();
+//                                    inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time
+//                                }
                             }
-                            inp.lazyConnectTimer.onTriggered.connect(fn);
                         } else {
-                            fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; }
+                            //fn =
                         }
                         theSignal.connect( fn );
                         //initial set value
@@ -410,7 +426,7 @@ Item {
                             fn();
                         }
                     }
-                    var newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, slotFunc: fn, startSignal: theSignal});
+                    var newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, slotFunc: fn, startSignal: theSignal, contextMenu: globalContextMenu });
                     connections[inp][outp] = newConnection;
                     slot1.blockOuter.connections.push(newConnection);
                     slot2.blockOuter.connections.push(newConnection);
@@ -421,7 +437,7 @@ Item {
                         mouseXLastClick = mouseX;
                         mouseYLastClick = mouseY;
                         ctxMenu.visible = true;
-                        ctxMenu2.visible = false;
+                        globalContextMenu.visible = false;
                     }
                 }
             }
@@ -430,7 +446,7 @@ Item {
                 id: previewConnection
                 visible: fullScreenMouseArea.dragStartSlot != null
             }
-            ContextMenu {
+            QuickAccessMenu {
                 id: ctxMenu
                 x: fullScreenMouseArea.mouseXLastClick
                 y: fullScreenMouseArea.mouseYLastClick
@@ -445,20 +461,21 @@ Item {
                 }
             }
             RightClickMenu {
-                id: ctxMenu2
+                settings: root
+                id: globalContextMenu
                 x: fullScreenMouseArea.mouseXLastClick
                 y: fullScreenMouseArea.mouseYLastClick
                 z: 900
                 width: 200
                 //height: 200
                 visible: false
-                options: [
-                    { name: "nothing",
-                        action: function() {
-                            console.log("activated");
-                        }
-                    }
-                ]
+//                options: [
+//                    { name: "nothing",
+//                        action: function() {
+//                            console.log("activated");
+//                        }
+//                    }
+//                ]
             }
         }
     }

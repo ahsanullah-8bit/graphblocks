@@ -9,7 +9,7 @@ ApplicationWindow {
     title: qsTr("GraphBlocks")
     id: root
     property alias control: graphBlockControl
-
+    property bool isEditingSuperblock: false
     ListModel {
         id: theBlocksModel
     }
@@ -126,6 +126,7 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.fillWidth: true
             blocksModel: theBlocksModel
+            isEditingSuperblock: root.isEditingSuperblock
         }
     }
 }

@@ -27,6 +27,7 @@ Item {
     property bool editable: true
     property bool isInputBlock: false
     property bool isOutputBlock: false
+    property var contextMenu
     function getSlot(propName, isInput) {
         if(isInput) {
             return slotsIn[propName];
@@ -74,8 +75,16 @@ Item {
             drag.maximumX: root.parent.width-root.width
             drag.minimumY: 0
             drag.maximumY: root.parent.height-root.height
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             onDoubleClicked: if(inner.dialog) inner.dialog.visible = true;
-            onClicked: root.forceActiveFocus();
+            onClicked: {
+                root.forceActiveFocus();
+                if (mouse.button === Qt.RightButton) {
+                    var ctxPos = mapToItem(contextMenu.parent, mouse.x, mouse.y);
+                    contextMenu.showOptions( root, contextMenuOptions, ctxPos.x, ctxPos.y );
+                    mouse.accepted = true;
+                }
+            }
             property bool activeDrop: drag.active
             onActiveDropChanged: forceActiveFocus()
         }
@@ -185,7 +194,7 @@ Item {
                 Timer {
                     id: theLazyConnectTimer
                     repeat: false
-                    property var lastConnect: -99999
+                    property int lastConnect: -99999
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -212,6 +221,7 @@ Item {
             }
         }
     }
+//  Label all input
 //    ColumnLayout {
 //        anchors.left: rootRect.left
 //        anchors.leftMargin: 2
@@ -278,6 +288,7 @@ Item {
             }
         }
     }
+//  Label all output
 //    ColumnLayout {
 //        anchors.right: rootRect.right
 //        anchors.rightMargin: 2
@@ -298,5 +309,22 @@ Item {
 //            }
 //        }
 //    }
+    property var contextMenuOptions: [
+        {
+            name: "Convert to public Input",
+            action: function( data ) { root.isInputBlock = true; root.isOutputBlock = false; },
+            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isInputBlock; }
+        },
+        {
+            name: "Convert to public Output",
+            action: function( data ) { root.isInputBlock = false; root.isOutputBlock = true; },
+            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isOutputBlock; }
+        },
+        {
+            name: "Make Block private",
+            action: function( data ) { root.isInputBlock = false; root.isOutputBlock = false; },
+            enabled: function( data, settings ) { return settings.isEditingSuperblock && (root.isInputBlock || root.isOutputBlock); }
+        }
+    ]
 }
 
