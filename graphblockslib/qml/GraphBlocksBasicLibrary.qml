@@ -7,6 +7,9 @@ import "qrc:/qml/theme/";
 
 Item {
     id:allTheBlockTemplates
+// Note: causes qml-recursion...
+//    GraphBlocksSuperBlock {
+//    }
     Item {
         id: blockReal
         property string displayName: "Real"

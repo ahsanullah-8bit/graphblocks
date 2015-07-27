@@ -101,12 +101,12 @@ ApplicationWindow {
     GraphBlocksBasicLibrary {
         id: basicLib
     }
-    Item {
-        id: internalLib
-        GraphBlocksSuperBlock {
+//    Item {
+//        id: internalLib
+//        GraphBlocksSuperBlock {
 
-        }
-    }
+//        }
+//    }
 
     RowLayout {
         anchors.fill: parent
@@ -118,7 +118,7 @@ ApplicationWindow {
             blocksModel: theBlocksModel
             Component.onCompleted: {
                 importLibrary("basic", basicLib);
-                importLibrary("internal", internalLib)
+                //importLibrary("internal", internalLib)
             }
         }
         GraphBlocksGraphControl {

@@ -10,6 +10,12 @@ ApplicationWindow {
     width: 640
     height: 480
     visible: true
+    Item {
+        id: superBlockLib
+        GraphBlocksSuperBlock {
+
+        }
+    }
     ColumnLayout {
         anchors.fill: parent
         Button {
@@ -28,6 +34,7 @@ ApplicationWindow {
                 height: 500
                 Component.onCompleted: {
                     gbw.importLibrary("Draw", drawLib);
+                    gbw.importLibrary("superblock", superBlockLib)
                 }
                 DrawingLibrary {
                     id: drawLib
