@@ -10,5 +10,7 @@
         <file>qml/GraphBlocksBasicLibrary.qml</file>
         <file>qml/ContextMenu.qml</file>
         <file>qml/RightClickMenu.qml</file>
+        <file>qml/GraphBlocksDynamicBlockInner.qml</file>
+        <file>qml/GraphBlocksSuperBlock.qml</file>
     </qresource>
 </RCC>

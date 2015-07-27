@@ -9,6 +9,7 @@ Item {
     property var input: []
     property var output: []
     property bool isDynamic: true
+
     Item {
         id: priv
         property var inputMap
