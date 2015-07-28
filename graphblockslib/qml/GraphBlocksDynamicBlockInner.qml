@@ -21,12 +21,9 @@ Item {
 
     Item {
         id: priv
-        //property var dynamicSlotNameToBlockUniqueIdAndInnerSlotName
-        property var dynamicSlotNameToInnerSlot
 
         property var inputMap
         property var outputMap
-        property var outputToChangedMethod
         Component.onCompleted: {
             if(typeof(inputMap) == "undefined") {
                 inputMap = {};
@@ -34,26 +31,65 @@ Item {
             if(typeof(outputMap) == "undefined") {
                 outputMap = {};
             }
-            if(typeof(outputToChangedMethod) == "undefined") {
-                outputToChangedMethod = {};
-            }
         }
     }
 
-    function makeSafeName(name) {
+    function makeSafeName( innerSlot ) {
+        var name = innerSlot.blockOuter.displayName + innerSlot.blockOuter.uniqueId + innerSlot.propName;
         return name.replace(/[^\w]/gi, '_');
     }
-    function removeBlockInput( propname ) {
-        delete priv.inputMap[propname];
-        var index1 = input.indexOf( propname );
+
+    function removeBlockInput( innerSlot ) {
+        console.log("poooodoodod");
+        var pn = makeSafeName( innerSlot );
+        console.log("search " + pn);
+        for(var ii in priv.inputMap) {
+            console.log("k: " + ii + " was " + priv.inputMap[ii].propName);
+        }
+
+        if(!priv.inputMap.hasOwnProperty( pn )) {
+            return;
+            //console.log("error while removing input");
+        }
+        console.log("sdsdsd");
+        for( var conIdx in innerSlot.blockOuter.connections ) {
+            console.log("schlop connection for slot" + innerSlot.propName);
+            var con = innerSlot.blockOuter.connections[conIdx];
+            console.log("neq connection for slot -> " + con.slot1.propName + " 2: " + con.slot2.propName);
+            //TODO: they are not equal anymore becuase repeater reread them!
+            //TODO: write own repeater
+            if(con.slot1 === innerSlot || con.slot2 === innerSlot) {
+                console.log("destroyed connection for slot");
+                con.destroy();
+            }
+        }
+        delete priv.inputMap[ pn ];
+        var index1 = input.indexOf( pn );
         if (index1 > -1) {
             input.splice(index1, 1);
         }
         parent.outerBlock.redoLayout();
     }
-    function removeBlockOutput( propname ) {
-        delete priv.outputMap[propname];
-        var index1 = output.indexOf( propname );
+
+    function removeBlockOutput( innerSlot ) {
+        console.log("sdssweettttttt");
+        var pn = makeSafeName( innerSlot );
+        if(!priv.outputMap.hasOwnProperty( pn )) {
+            return;
+            //console.log("error while removing output");
+        }
+        console.log("sdseeee");
+        for( var conIdx in innerSlot.blockOuter.connections ) {
+            console.log("schlop2 connection for slot");
+            var con = innerSlot.blockOuter.connections[conIdx];
+            console.log("neqrrr connection for slot");
+            if(con.slot1 == innerSlot || con.slot2 == innerSlot) {
+                console.log("destroyed connection for slot");
+                con.destroy();
+            }
+        }
+        delete priv.outputMap[ pn ];
+        var index1 = output.indexOf( pn );
         if (index1 > -1) {
             output.splice(index1, 1);
         }
@@ -61,21 +97,19 @@ Item {
     }
 
     function addBlockOutput( innerSlot ) {
-        var pn = makeSafeName( innerSlot.blockOuter.displayName + innerSlot.propName );
+        var pn = makeSafeName( innerSlot );
         if(priv.outputMap.hasOwnProperty( pn )) {
             return false;
         }
         priv.outputMap[ pn ] = innerSlot;
         if(-1 == output.indexOf( pn )) {
-            console.log(" puso");
-            console.log(" pushou " + pn + " is " + innerSlot.blockOuter.displayName + "." + innerSlot.propName);
             output.push( pn );
         }
         parent.outerBlock.redoLayout();
     }
 
     function addBlockInput( innerSlot ) {
-        var pn = makeSafeName( innerSlot.blockOuter.displayName + innerSlot.propName );
+        var pn = makeSafeName( innerSlot );
         if(priv.inputMap.hasOwnProperty( pn )) {
             return false;
         }
@@ -89,9 +123,7 @@ Item {
     }
 
     function getBlockInput( pn ) {
-        //var pn = makeSafeName( innerSlot.block.displayName + innerSlot.propName );
         if(!priv.inputMap.hasOwnProperty( pn )) {
-            console.log(" 22222");
             console.log("dynamic block input connection error for " + pn);
             return null;
         }
@@ -99,38 +131,11 @@ Item {
     }
 
     function getBlockOutput( pn ) {
-        //var pn = makeSafeName( innerSlot.block.displayName + innerSlot.propName );
         if(!priv.outputMap.hasOwnProperty( pn )) {
-            console.log(" wwwww");
             console.log("dynamic block output connection error for " + pn);
             return null;
         }
         return priv.outputMap[ pn ]
-    }
-
-    function setBlockInput( propname, value ) {
-        console.log("got222 " );
-        console.log("got " + propname + " to " + value );
-        if(priv.inputMap[propname] !== value) {
-            priv.inputMap[propname] = value;
-        }
-        //TODO
-    }
-    function setBlockOutput( propname, value ) {
-        if(priv.outputMap[propname] !== value) {
-            priv.outputMap[propname] = value;
-            if(priv.outputToChangedMethod[propname] === "undefined") {
-                priv.outputToChangedMethod[propname]( value );
-            }
-        }
-    }
-    function connectToChangedSignal(propname, fn) {
-        var oldfn = priv.outputToChangedMethod[propname];
-        if( typeof(oldfn) === "function") {
-            priv.outputToChangedMethod[propname] = function( value ) { fn( value ); oldfn( value ); };
-        } else {
-            priv.outputToChangedMethod[propname] = fn;
-        }
     }
 }
 

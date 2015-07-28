@@ -11,7 +11,6 @@ ApplicationWindow {
     property alias control: graphBlockControl
     property bool isEditingSuperblock: false
 
-    property var currentSuperblock: null
     property var superblockToControl
 
     Component.onCompleted: {
@@ -66,10 +65,6 @@ ApplicationWindow {
     }
     function saveGraph() {
         var json = graphBlockControl.saveGraph();
-        if( currentSuperblock ) {
-            currentSuperblock.inner.json = json;
-            return;
-        }
         return json;
     }
     menuBar: MenuBar {
@@ -82,6 +77,10 @@ ApplicationWindow {
             MenuItem {
                 text: qsTr("&Save")
                 onTriggered: saveFileDialog.open()
+            }
+            MenuItem {
+                text: qsTr("C&lear")
+                onTriggered: graphBlockControl.clear()
             }
             MenuItem {
                 text: qsTr("E&xit")

@@ -35,15 +35,69 @@ Item {
             return slotsOut[propName];
         }
     }
+    ListModel
+    {
+        id: slotsInModel
+    }
+    ListModel
+    {
+        id: slotsOutModel
+    }
+    function compareArrayAnModel(arr, theModel) {
+        var foundIndices = {};
+        for(var i=0; i<theModel.count; ++i) {
+            foundIndices[ i ] = false;
+        }
+
+        for(var s=0 ; s<arr.length ; ++s) {
+            var contains = false;
+            for(var i2=0; i2<theModel.count; ++i2) {
+                if(theModel.get(i2) === arr[s]) {
+                    contains = true;
+                    foundIndices[ i2 ] = true;
+                }
+            }
+            if( contains == false ) {
+                console.log("append: " + arr[s]);
+                theModel.append( { nameData: arr[s] } );
+            }
+        }
+        var indicesToRemove = [];
+        for(var i3 in foundIndices) {
+            if( ! foundIndices[i3] ) {
+                indicesToRemove.push( i3 );
+            }
+        }
+        for(var i4=indicesToRemove.length-1; i4>=0; --i4) {
+            console.log("removed: " + i4);
+            theModel.remove(i4);
+        }
+        console.log("finally: " + theModel.count);
+        return theModel.count;
+    }
+
     function redoLayout() {
-        inpRepeater.model = 0;
-        outpRepeater.model = 0;
-        root.inputHeight = 0;
-        root.outputHeight = 0;
-        inpRepeater.model = inner.input;
-        outpRepeater.model = inner.output;
-        inpRepeater.update();
-        outpRepeater.update();
+        //root.inputHeight = 0;
+        //root.outputHeight = 0;
+        console.log("inp: ");
+        if(inner.input) {
+            root.inputHeight = (20 + 5) * compareArrayAnModel(inner.input, slotsInModel);
+        }
+        console.log("outp: ");
+        if(inner.output) {
+            root.outputHeight = (20 + 5) * compareArrayAnModel(inner.output, slotsOutModel);
+        }
+
+        //slotsOutModel.clear();
+        //inner.output.forEach(function(s){
+        //    slotsOutModel.append(s);
+        //});
+        //inpRepeater.model = 0;
+        //outpRepeater.model = 0;
+        //inpRepeater.model = inner.input;
+        //outpRepeater.model = inner.output;
+        //inpRepeater.update();
+        //outpRepeater.update();
     }
     function cleanupAndDestroy() {
         connections.forEach(function(con) {
@@ -55,7 +109,9 @@ Item {
         slotsIn = {}; //Note: this must be executed before Repeater expands
         slotsOut = {};
         connections = [];
+
     }
+    onInnerChanged: redoLayout()
 //    Component.onDestruction: {
 //    }
     Keys.onPressed: {
@@ -191,13 +247,13 @@ Item {
         width: rootRect.anchors.leftMargin
         Repeater {
             id: inpRepeater
-            model: inner.input
+            model: slotsInModel
             Rectangle {
                 id: inSlot
                 z: 10
                 property bool isInput: true
                 property bool isOutput: false
-                property string propName: inner.input[index]
+                property string propName: nameData //inner.input[index]
                 property var block: inner
                 property var blockOuter: root
                 property alias lazyConnectTimer: theLazyConnectTimer
@@ -205,7 +261,8 @@ Item {
                 color: slotInpMa.containsMouse?"grey":"black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
-                    slotsIn[inner.input[index]] = inSlot;
+                    //slotsIn[inner.input[index]] = inSlot;
+                    slotsIn[ nameData ] = inSlot;
                 }
                 Timer {
                     id: theLazyConnectTimer
@@ -233,9 +290,12 @@ Item {
                     }
                 }
             }
-            onItemAdded: {
-                root.inputHeight += 20 + 5;
-            }
+//            onItemAdded: {
+//                root.inputHeight += 20 + 5;
+//            }
+//            onItemRemoved: {
+//                root.inputHeight -= 20 + 5;
+//            }
         }
     }
 //  Label all input
@@ -267,20 +327,21 @@ Item {
         width: rootRect.anchors.rightMargin
         Repeater {
             id: outpRepeater
-            model: inner.output
+            model: slotsOutModel
             Rectangle {
                 id: outSlot
                 z: 10
                 property bool isInput: false
                 property bool isOutput: true
-                property string propName: inner.output[index]
+                property string propName: nameData//inner.output[index]
                 property var block: inner
                 property var blockOuter: root
                 height: 20
                 color: slotOutpMa.containsMouse?"grey":"black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
-                    slotsOut[inner.output[index]] = outSlot;
+                    //slotsOut[inner.output[index]] = outSlot;
+                    slotsOut[ nameData ] = outSlot;
                 }
                 MouseArea {
                     id:slotOutpMa
@@ -303,9 +364,12 @@ Item {
                     }
                 }
             }
-            onItemAdded: {
-                root.outputHeight += 20 + 5;
-            }
+//            onItemAdded: {
+//                root.outputHeight += 20 + 5;
+//            }
+//            onItemRemoved: {
+//                root.outputHeight -= 20 + 5;
+//            }
         }
     }
 //  Label all output

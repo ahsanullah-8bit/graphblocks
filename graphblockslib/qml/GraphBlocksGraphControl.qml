@@ -2,6 +2,7 @@ import QtQuick 2.0
 import QtQuick.Controls 1.3
 import "qrc:/qml/theme/";
 
+//TODO: on deletion, all connections must be destroyed seperatly so they are disconnected. also blocks?
 Item {
     id: root
     z: -100
@@ -108,12 +109,14 @@ Item {
     }
 
     function blockIoChanged( block ) {
+        console.log("isedir");
         if( !isEditingSuperblock ) {
             return;
         }
         var so;
         var si;
         if( block.isInputBlock ) {
+            console.log("INININI");
             for(so in block.slotsOut) {
                 sourceElement.removeBlockOutput( block.slotsOut[so] );
             }
@@ -121,6 +124,7 @@ Item {
                 sourceElement.addBlockInput( block.slotsIn[si] );
             }
         } else if( block.isOutputBlock ) {
+            console.log("OUOUOUI");
             for(si in block.slotsIn) {
                 sourceElement.removeBlockInput( block.slotsIn[si] );
             }
@@ -128,6 +132,7 @@ Item {
                 sourceElement.addBlockOutput( block.slotsOut[so] );
             }
         } else {
+            console.log("PRIVATECASE");
             for(si in block.slotsIn) {
                 sourceElement.removeBlockInput( block.slotsIn[si] );
             }
@@ -396,6 +401,7 @@ Item {
                     id: lazyConnectionTimers
                 }
                 //TODO: Hopefully never called due to "lazyProps"-objects containing lazyTimers
+                // may be needed for completly graphicless graphs
                 property var lazyTimers
                 function getOrCreateLazyTimer(e1, e2, e3, e4) {
                     var a, b, c, d
@@ -441,27 +447,17 @@ Item {
                     return true;
                 }
 
-                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, initialBind, lazyProps, inpDyn, outpDyn) {
+                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, initialBind, lazyProps) {
                     var typeIn = typeof inpElem[inpPropertyName];
                     var typeOut = typeof outpElem[outpPropertyName];
                     var fn;
                     var theSignal;
                     var disconnectLazyFn;
-                    //Note: superblock + functions/event/fire not implemented yet
-                    if( inpDyn && outpDyn ) {
-                        fn = function( val ) { inpElem.setBlockInput(inpPropertyName, val); };
-                    } else if( inpDyn && !outpDyn ) {
-                        fn = function() { inpElem.setBlockInput(inpPropertyName, outpElem[outpPropertyName]); };
-                    } else if( !inpDyn && outpDyn ) {
-                        fn = function( val ) { inpElem[inpPropertyName] = val };
-                    } else if(typeIn == "function" && typeOut == "function") {
+                    if(typeIn == "function" && typeOut == "function") {
                         fn = inpElem[ inpPropertyName ];
                         theSignal = outpElem[outpPropertyName];
                     } else {
                         fn = function() { inpElem[inpPropertyName] = outpElem[outpPropertyName]; };
-                    }
-                    //if the Signal is not special for functions or dynamic Output, use the most common case (change event) ...
-                    if( !outpDyn && !theSignal ) {
                         var chSigNam = outpPropertyName.charAt(0).toUpperCase();
                         chSigNam += outpPropertyName.substring(1);
                         theSignal = outpElem["on"+chSigNam+"Changed"];
@@ -484,13 +480,7 @@ Item {
                             }
                         }
                     }
-                    if( theSignal ) {
-                        theSignal.connect( fn );
-                    } else if( outpDyn ) {
-                        outpElem.connectToChangedSignal( fn );
-                    } else {
-                        console.log( "Error, signal not available." );
-                    }
+                    theSignal.connect( fn );
                     //initial set value
                     if( initialBind ) {
                         fn();
@@ -547,13 +537,11 @@ Item {
                         });
                         connections[inp] = {};
                     }
-                    console.log("fetching inp " + (inp.block.isDynamic?inp.propName:"nonon"));
-                    console.log("fetching oup " + (outp.block.isDynamic?outp.propName:"nono"));
                     var inpSrc = inp.block.isDynamic?inp.block.getBlockInput(inp.propName):inp;
                     var outpSrc = outp.block.isDynamic?outp.block.getBlockOutput(outp.propName):outp;
 
                     //TODO: remove is dynamic, loops of superblocks... recursive?!
-                    var disconnectLogicalFn = createLogicalConnection(inpSrc.block, inpSrc.propName, outpSrc.block, outpSrc.propName, !outpSrc.block.noInitialBind, inpSrc.block, inpSrc.block.isDynamic, outpSrc.block.isDynamic);
+                    var disconnectLogicalFn = createLogicalConnection(inpSrc.block, inpSrc.propName, outpSrc.block, outpSrc.propName, !outpSrc.block.noInitialBind, inpSrc.block);
 
                     var newConnection;
                     var disconnectFn = function() {
