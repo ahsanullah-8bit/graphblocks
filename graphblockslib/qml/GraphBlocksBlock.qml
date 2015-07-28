@@ -35,20 +35,23 @@ Item {
             return slotsOut[propName];
         }
     }
+    function cleanupAndDestroy() {
+        connections.forEach(function(con) {
+            con.destroy();
+        });
+        destroy();
+    }
     Component.onCompleted: {
         slotsIn = {}; //Note: this must be executed before Repeater expands
         slotsOut = {};
         connections = [];
     }
-    Component.onDestruction: {
-        connections.forEach(function(con) {
-            con.destroy();
-        });
-    }
+//    Component.onDestruction: {
+//    }
     Keys.onPressed: {
         if (event.key === Qt.Key_Delete) {
             if(root.editable) {
-                destroy();
+                cleanupAndDestroy();
                 event.accepted = true;
             }
         }

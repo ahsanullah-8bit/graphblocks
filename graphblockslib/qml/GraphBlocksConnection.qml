@@ -7,6 +7,7 @@ Canvas {
     property var slot2
     property var lineStart: slot1 ? parent.mapFromItem(slot1, slot1.width*0.5, slot1.height*0.5) : {}
     property var lineEnd: slot2 ? parent.mapFromItem(slot2, slot2.width*0.5, slot2.height*0.5) : {}
+    property var disconnectionMethod
     property var slotFunc
     property var startSignal
     property var contextMenu
@@ -37,42 +38,19 @@ Canvas {
     onSlot1Changed: setupBinding1()
     onSlot2Changed: setupBinding2()
     Component.onDestruction: {
-        var inp = slot1?slot1.isInput?slot1:slot2:slot2?slot2.isInput?slot2:null:null;
-        var outp = slot1?slot1.isOutput?slot1:slot2:slot2?slot2.isOutput?slot2:null:null;
-        if(outp && startSignal && slotFunc) {
-            startSignal.disconnect( slotFunc );
-        }
-        if(slot1 && slot2) {
-            delete parent.connectionsOwner.connections[inp][outp];
-        } else {
-            if(parent.connectionsOwner) {
-                Object.keys(parent.connectionsOwner.connections).forEach(function(inp) {
-                    Object.keys(parent.connectionsOwner.connections[inp]).forEach(function(outp) {
-                        // can have deleted connections
-                        if(parent.connectionsOwner.connections[inp].hasOwnProperty(outp)) {
-                            if(parent.connectionsOwner.connections[inp][outp] === canvas) {
-                                delete parent.connectionsOwner.connections[inp][outp];
-                            }
-                        }
-                    })
-                });
-            }
-        }
+        disconnectionMethod();
+
         if(slot1) {
-            var index1 = slot1.blockOuter.connections.indexOf(canvas);
-            if (index1 > -1) {
-                slot1.blockOuter.connections.splice(index1, 1);
-            }
             slot1.parent.parent.onXChanged.disconnect(redoStart);
             slot1.parent.parent.onYChanged.disconnect(redoStart);
+            slot1.parent.parent.onWidthChanged.disconnect(redoStart);
+            slot1.parent.parent.onHeightChanged.disconnect(redoStart);
         }
         if(slot2) {
-            var index2 = slot2.blockOuter.connections.indexOf(canvas);
-            if (index2 > -1) {
-                slot2.blockOuter.connections.splice(index2, 1);
-            }
             slot2.parent.parent.onXChanged.disconnect(redoEnd);
             slot2.parent.parent.onYChanged.disconnect(redoEnd);
+            slot2.parent.parent.onWidthChanged.disconnect(redoStart);
+            slot2.parent.parent.onHeightChanged.disconnect(redoStart);
         }
     }
 
@@ -87,10 +65,14 @@ Canvas {
         if(_oldSlot1) {
             _oldSlot1.parent.parent.onXChanged.disconnect(redoStart);
             _oldSlot1.parent.parent.onYChanged.disconnect(redoStart);
+            _oldSlot1.parent.parent.onWidthChanged.disconnect(redoStart);
+            _oldSlot1.parent.parent.onHeightChanged.disconnect(redoStart);
         }
         if(slot1) {
             slot1.parent.parent.onXChanged.connect(redoStart);
             slot1.parent.parent.onYChanged.connect(redoStart);
+            slot1.parent.parent.onWidthChanged.connect(redoStart);
+            slot1.parent.parent.onHeightChanged.connect(redoStart);
             _oldSlot1 = slot1;
         }
     }
@@ -98,10 +80,14 @@ Canvas {
         if(_oldSlot2) {
             _oldSlot2.parent.parent.onXChanged.disconnect(redoEnd);
             _oldSlot2.parent.parent.onYChanged.disconnect(redoEnd);
+            _oldSlot2.parent.parent.onWidthChanged.disconnect(redoEnd);
+            _oldSlot2.parent.parent.onHeightChanged.disconnect(redoEnd);
         }
         if(slot2) {
             slot2.parent.parent.onXChanged.connect(redoEnd);
             slot2.parent.parent.onYChanged.connect(redoEnd);
+            slot2.parent.parent.onWidthChanged.connect(redoEnd);
+            slot2.parent.parent.onHeightChanged.connect(redoEnd);
             _oldSlot2 = slot2;
         }
     }

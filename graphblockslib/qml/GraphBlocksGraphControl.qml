@@ -175,24 +175,20 @@ Item {
                 console.debug("Error: "+ connectionComponent.errorString() );
         }
         root.ioBlocks = {};
-        //root.classMap = {};
         for(var inputs in root.input) {
-            var dn = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
-            createInputBlock(dn, function(innerBlock) {
+            var dni = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
+            createInputBlock(dni, function(innerBlock) {
                 var propName = root.input[inputs];
-                var chSigNam = propName.charAt(0).toUpperCase();
-                chSigNam += propName.substring(1);
-                var theSignal = root.sourceElement["on"+chSigNam+"Changed"];
-                theSignal.connect(function() { innerBlock.outp = root.sourceElement[propName];});
+                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( innerBlock, "outp", root.sourceElement, propName );
+                // never disconnected, ioblock persist!
             });
         }
         for(var outputs in root.output) {
-            var dn = root.output[outputs].charAt(0).toUpperCase() + root.output[outputs].slice(1);
-            createOutputBlock(dn, function(innerBlock) {
-                var myOut = outputs;
-                innerBlock.onInpChanged.connect(function() {
-                    root.sourceElement[root.output[myOut]] = innerBlock.inp;
-                });
+            var dno = root.output[outputs].charAt(0).toUpperCase() + root.output[outputs].slice(1);
+            createOutputBlock(dno, function(innerBlock) {
+                var propName = root.output[outputs];
+                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( root.sourceElement , propName, innerBlock, "inp" );
+                // never disconnected, ioblock persist!
             });
         }
     }
@@ -374,6 +370,7 @@ Item {
                     //TODO: connection deletion -> timer deletion!
                     id: lazyConnectionTimers
                 }
+                //TODO: Hopefully never called due to "lazyProps"-objects containing lazyTimers
                 property var lazyTimers
                 function getOrCreateLazyTimer(e1, e2, e3, e4) {
                     var a, b, c, d
@@ -404,59 +401,67 @@ Item {
                     }
                     return d;
                 }
-                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName) {
+
+                // returns, wether a function only connection could be established
+                // (caller can decide, to destroy old value connections in the case)
+                function shouldRemoveOldConnections(typeIn, typeOut) {
+                    return typeIn !== "function" || typeOut !== "function";
+                }
+
+                function canConnect(typeIn, typeOut) {
+                    // call function on value change is usually not allowed
+                    if(typeIn === "function" && typeOut !== "function") return false;
+                    //set value on to functioncall is impossible
+                    if(typeIn !== "function" && typeOut === "function") return false;
+                    return true;
+                }
+
+                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, initialBind, lazyProps) {
                     var typeIn = typeof inpElem[inpPropertyName];
                     var typeOut = typeof outpElem[outpPropertyName];
-                    if(typeIn == "function" && typeOut !== "function" || typeIn !== "function" && typeOut == "function") {
-                        return;
-                    }
+                    var fn;
+                    var theSignal;
+                    var disconnectLazyFn;
                     if(typeIn == "function" && typeOut == "function") {
-                        outpElem[outpPropertyName].connect( inpElem[ inpPropertyName ] );
-                        // no initial call
-                        //inp.block[inp.propName]();
+                        fn = inpElem[ inpPropertyName ];
+                        theSignal = outpElem[outpPropertyName];
                     } else {
-                        if(typeOut === "undefined" && typeIn !== "undefined") {
-                            // can not assign undefined to "double"...
-                            // exceptionally set output of connection to make types fit...
-                            if(typeIn === "number") {
-                                outpElem[outpPropName] = 0.0;
-                            } else {
-                                console.log("does this work? -> setting: " + typeOut + " to " + typeIn);
-                            }
-                        }
-                        var theSignal;
-//                        if( sig ) {
-//                            theSignal = sig;
-//                        } else {
-                            var chSigNam = outpPropName.charAt(0).toUpperCase();
-                            chSigNam += outpPropName.substring(1);
-                            theSignal = outpElem["on"+chSigNam+"Changed"];
-//                        }
-                        // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
-                        // no check is added here for performance
-                        var fn = function() { inpElem[inpPropertyName] = outpElem[outpPropName]; };
-                        if(inpElem.lazyConnect && (inpElem.lazyInputProps?inpElem.lazyInputProps.indexOf(inpPropName) !== -1:true)) {
-                            var lazyConnectTimer = getOrCreateLazyTimer(inpElem, inpPropertyName, outpElem, outpPropertyName);
-                            lazyConnectTimer.onTriggered.connect( fn );
-                            fn = function() {
-                                var lazyInterval = inpElem.lazyInterval?inpElem.lazyInterval:1000;
-                                var onlyIfNoChange = inpElem.onlyResting; //only set value, if x sec no change occured
-                                if( lazyConnectTimer.running) {
-                                    if( onlyIfNoChange ) {
-                                        lazyConnectTimer.restart();
-                                    }
-                                } else {
-                                    lazyConnectTimer.interval = lazyInterval;
-                                    lazyConnectTimer.start();
+                        fn = function() { inpElem[inpPropertyName] = outpElem[outpPropertyName]; };
+                        var chSigNam = outpPropertyName.charAt(0).toUpperCase();
+                        chSigNam += outpPropertyName.substring(1);
+                        theSignal = outpElem["on"+chSigNam+"Changed"];
+                    }
+                    if(lazyProps && lazyProps.lazyConnect && (lazyProps.lazyInputProps?lazyProps.lazyInputProps.indexOf(inpPropertyName) !== -1:true)) {
+                        var lazyConnectTimer = lazyProps.lazyConnectTimer?lazyProps.lazyConnectTimer:getOrCreateLazyTimer(inpElem, inpPropertyName, outpElem, outpPropertyName);
+                        lazyConnectTimer.onTriggered.connect( fn );
+                        var lazyFn = fn;
+                        disconnectLazyFn = function() { lazyConnectTimer.onTriggered.disconnect( lazyFn ) };
+                        fn = function() {
+                            var lazyInterval = lazyProps.lazyInterval?lazyProps.lazyInterval:1000;
+                            var onlyIfNoChange = lazyProps.onlyResting; //only set value, if x sec no change occured
+                            if( lazyConnectTimer.running) {
+                                if( onlyIfNoChange ) {
+                                    lazyConnectTimer.restart();
                                 }
+                            } else {
+                                lazyConnectTimer.interval = lazyInterval;
+                                lazyConnectTimer.start();
                             }
-                        }
-                        theSignal.connect( fn );
-                        //initial set value
-                        if(!outpElem.noInitialBind) {
-                            fn();
                         }
                     }
+                    theSignal.connect( fn );
+                    //initial set value
+                    if( initialBind ) {
+                        fn();
+                    }
+                    //// construct destruction method, that must be called to unconnect
+                    var disconnectLogical = function() {
+                        if( outpElem && theSignal ) {
+                            theSignal.disconnect( fn );
+                        }
+                        if( disconnectLazyFn ) { disconnectLazyFn(); }
+                    };
+                    return disconnectLogical;
                 }
                 //TODO: see lines 194: Reduce code repetition. Make abstract "createConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, signal)"
                 function createConnection(slot1, slot2) {
@@ -479,90 +484,144 @@ Item {
                     var outp = slot1.isOutput?slot1:slot2;
                     var typeIn = typeof inp.block[inp.propName];
                     var typeOut = typeof outp.block[outp.propName];
-                    if(typeIn == "function" && typeOut !== "function" || typeIn !== "function" && typeOut == "function") {
-                        return;
-                    }
+
+
                     if(!connections[inp]) {
                         connections[inp] = {};
                     }
                     if(connections[inp][outp]) {
                         return;
                     }
+                    if(!canConnect(typeIn, typeOut)) return;
 
-                    if(typeIn == "function" && typeOut == "function") {
-                        outp.block[outp.propName].connect(inp.block[inp.propName]);
-                        // no initial call
-                        //inp.block[inp.propName]();
-                    } else {
-                        if(typeOut === "undefined" && typeIn !== "undefined") {
-                            // can not assign undefined to "double"...
-                            // exceptionally set output of connection to make types fit...
-                            if(typeIn === "number") {
-                                outp.block[outp.propName] = 0.0;
-                            } else {
-                                //...
-                                console.log("does this work? -> setting: " + typeOut + " to " + typeIn);
-                            }
-                        }
+                    if( shouldRemoveOldConnections(typeIn, typeOut) ) {
                         //forbid multiple inputs? yes!
                         Object.keys(connections[inp]).forEach(function(s2prop) {
                             // can have deleted connections
                             if(connections[inp].hasOwnProperty(s2prop)) {
                                 if( connections[inp][s2prop] ) {
-                                    connections[inp][s2prop].destroy();
+                                    connections[inp][s2prop].destroy(); // will trigger removal of logical connection
                                 }
                             }
                         });
                         connections[inp] = {};
+                    }
+                    var disconnectLogicalFn = createLogicalConnection(inp.block, inp.propName, outp.block, outp.propName, !outp.block.noInitialBind, inp.block);
 
-                        var chSigNam = outp.propName.charAt(0).toUpperCase();
-                        chSigNam += outp.propName.substring(1);
-                        var theSignal = outp.block["on"+chSigNam+"Changed"];
-                        // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
-                        // no check is added here for performance
-                        //Todo: other lazy behaviour: wait before sending first signal!
-                        var fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; };
-                        if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
-                            inp.lazyConnectTimer.onTriggered.connect( fn );
-                            fn = function() {
-                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
-                                var onlyIfNoChange = inp.block.onlyResting; //only set value, if x sec no change occured
-                                if( inp.lazyConnectTimer.running) {
-                                    if( onlyIfNoChange ) {
-                                        inp.lazyConnectTimer.restart();
-                                    }
-                                } else {
-                                    inp.lazyConnectTimer.interval = lazyInterval;
-                                    inp.lazyConnectTimer.start();
-                                }
-//                                if( inp.lazyConnectTimer.running ) {
-//                                    return;
-//                                }
-//                                var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
-//                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
-//                                if(timediff >= lazyInterval) {
-//                                    inp.block[inp.propName] = outp.block[outp.propName];
-//                                    inp.lazyConnectTimer.lastConnect = Date.now();
-//                                } else {
-//                                    inp.lazyConnectTimer.interval = lazyInterval - timediff;
-//                                    inp.lazyConnectTimer.start();
-//                                    inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time
-//                                }
-                            }
+                    var newConnection;
+                    var disconnectFn = function() {
+                        disconnectLogicalFn();
+                        if(slot1 && slot2) {
+                            delete connections[inp][outp];
                         } else {
-                            //fn =
+                            if( fullScreenMouseArea ) {
+                                Object.keys(connections).forEach(function(inp) {
+                                    Object.keys(connections[inp]).forEach(function(outp) {
+                                        // can have deleted connections
+                                        if(connections[inp].hasOwnProperty(outp)) {
+                                            if(connections[inp][outp] === newConnection) {
+                                                delete connections[inp][outp];
+                                            }
+                                        }
+                                    })
+                                });
+                            }
                         }
-                        theSignal.connect( fn );
-                        //initial set value
-                        if(!outp.block.noInitialBind) {
-                            fn();
+                        if(slot1) {
+                            var index1 = slot1.blockOuter.connections.indexOf( newConnection );
+                            if (index1 > -1) {
+                                slot1.blockOuter.connections.splice(index1, 1);
+                            }
+                        }
+                        if(slot2) {
+                            var index2 = slot2.blockOuter.connections.indexOf( newConnection );
+                            if (index2 > -1) {
+                                slot2.blockOuter.connections.splice(index2, 1);
+                            }
                         }
                     }
-                    var newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, slotFunc: fn, startSignal: theSignal, contextMenu: globalContextMenu });
+
+                    newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, /*slotFunc: fn, startSignal: theSignal,*/ contextMenu: globalContextMenu, disconnectionMethod: disconnectFn });
                     connections[inp][outp] = newConnection;
                     slot1.blockOuter.connections.push(newConnection);
                     slot2.blockOuter.connections.push(newConnection);
                 }
+//                function createConnectionOld(slot1, slot2) {
+
+//                    if(typeIn == "function" && typeOut == "function") {
+//                        outp.block[outp.propName].connect(inp.block[inp.propName]);
+//                        // no initial call
+//                        //inp.block[inp.propName]();
+//                    } else {
+//                        if(typeOut === "undefined" && typeIn !== "undefined") {
+//                            // can not assign undefined to "double"...
+//                            // exceptionally set output of connection to make types fit...
+//                            if(typeIn === "number") {
+//                                outp.block[outp.propName] = 0.0;
+//                            } else {
+//                                //...
+//                                console.log("does this work? -> setting: " + typeOut + " to " + typeIn);
+//                            }
+//                        }
+//                        //forbid multiple inputs? yes!
+//                        Object.keys(connections[inp]).forEach(function(s2prop) {
+//                            // can have deleted connections
+//                            if(connections[inp].hasOwnProperty(s2prop)) {
+//                                if( connections[inp][s2prop] ) {
+//                                    connections[inp][s2prop].destroy();
+//                                }
+//                            }
+//                        });
+//                        connections[inp] = {};
+
+//                        var chSigNam = outp.propName.charAt(0).toUpperCase();
+//                        chSigNam += outp.propName.substring(1);
+//                        var theSignal = outp.block["on"+chSigNam+"Changed"];
+//                        // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
+//                        // no check is added here for performance
+//                        //Todo: other lazy behaviour: wait before sending first signal!
+//                        var fn = function() { inp.block[inp.propName] = outp.block[outp.propName]; };
+//                        if(inp.block.lazyConnect && (inp.block.lazyInputProps?inp.block.lazyInputProps.indexOf(inp.propName) !== -1:true)) {
+//                            inp.lazyConnectTimer.onTriggered.connect( fn );
+//                            fn = function() {
+//                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
+//                                var onlyIfNoChange = inp.block.onlyResting; //only set value, if x sec no change occured
+//                                if( inp.lazyConnectTimer.running) {
+//                                    if( onlyIfNoChange ) {
+//                                        inp.lazyConnectTimer.restart();
+//                                    }
+//                                } else {
+//                                    inp.lazyConnectTimer.interval = lazyInterval;
+//                                    inp.lazyConnectTimer.start();
+//                                }
+////                                if( inp.lazyConnectTimer.running ) {
+////                                    return;
+////                                }
+////                                var timediff = Date.now() - inp.lazyConnectTimer.lastConnect;
+////                                var lazyInterval = inp.block.lazyInterval?inp.block.lazyInterval:1000;
+////                                if(timediff >= lazyInterval) {
+////                                    inp.block[inp.propName] = outp.block[outp.propName];
+////                                    inp.lazyConnectTimer.lastConnect = Date.now();
+////                                } else {
+////                                    inp.lazyConnectTimer.interval = lazyInterval - timediff;
+////                                    inp.lazyConnectTimer.start();
+////                                    inp.lazyConnectTimer.lastConnect -= 100; // ensure update will make it thru check next time
+////                                }
+//                            }
+//                        } else {
+//                            //fn =
+//                        }
+//                        theSignal.connect( fn );
+//                        //initial set value
+//                        if(!outp.block.noInitialBind) {
+//                            fn();
+//                        }
+//                    }
+//                    var newConnection = root.connectionComponent.createObject(parentForConnections, {slot1: slot1, slot2: slot2, slotFunc: fn, startSignal: theSignal, contextMenu: globalContextMenu });
+//                    connections[inp][outp] = newConnection;
+//                    slot1.blockOuter.connections.push(newConnection);
+//                    slot2.blockOuter.connections.push(newConnection);
+//                }
 
                 Keys.onPressed: {
                     if (event.key === Qt.Key_Space) {
