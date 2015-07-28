@@ -15,6 +15,7 @@ Item {
     Rectangle {
         id: priv
         property bool noReinit
+        property var shownOptions
         z: 800
         anchors.fill: parent
         border.width: 1
@@ -43,11 +44,13 @@ Item {
             lv.forceActiveFocus();
         }
         lv.model.clear();
+        priv.shownOptions = [];
         for( var i in options) {
             if(options.hasOwnProperty(i)) {
                 var opt = options[i];
                 if(!opt.enabled || opt.enabled( itemData, settings)) {
                     lv.model.append( opt );
+                    priv.shownOptions.push( opt );
                 }
             }
         }
@@ -57,6 +60,7 @@ Item {
         }
     }
     ListView {
+        property alias shownOptions: priv.shownOptions
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -83,7 +87,7 @@ Item {
                     lv.currentIndex = index;
                 }
                 onClicked: {
-                    options[ index ].action( root.itemData );
+                    lv.shownOptions[ index ].action( root.itemData, root.settings );
                     root.visible = false;
                 }
             }

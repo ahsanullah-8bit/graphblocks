@@ -14,12 +14,12 @@ Item {
             id: superblockInner
             width: 100
             height: 20
-            property var input: ["inp1", "inp2"]
-            property var output: ["outp1", "outp2"]
-            property var inp1
-            property var inp2
-            property var outp1
-            property var outp2
+//            property var input: ["inp1", "inp2"]
+//            property var output: ["outp1", "outp2"]
+//            property var inp1
+//            property var inp2
+//            property var outp1
+//            property var outp2
             property var json
             Component.onDestruction: {
                 root.controlManager.removeSuperblockControl( superblockInner );

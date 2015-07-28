@@ -35,6 +35,16 @@ Item {
             return slotsOut[propName];
         }
     }
+    function redoLayout() {
+        inpRepeater.model = 0;
+        outpRepeater.model = 0;
+        root.inputHeight = 0;
+        root.outputHeight = 0;
+        inpRepeater.model = inner.input;
+        outpRepeater.model = inner.output;
+        inpRepeater.update();
+        outpRepeater.update();
+    }
     function cleanupAndDestroy() {
         connections.forEach(function(con) {
             con.destroy();
@@ -110,7 +120,7 @@ Item {
             anchors.rightMargin: root.outputWidth
             TextField {
                 id:textFieldBlockDisplayName
-                enabled: root.editable
+                enabled: root.editable && !root.isInputBlock && !root.isOutputBlock // yet editing of ioBlocks is not allowed due to complex code required for listening of namechange (name is used as slot-name).
                 font.bold: true
                 text: root.displayName
                 style: TextFieldStyle {
@@ -145,6 +155,7 @@ Item {
             }
         }
         Item {
+            property alias outerBlock: root
             id: parentForInnerElem
             anchors.top: theLayout.bottom
             anchors.left: parent.left
@@ -178,6 +189,7 @@ Item {
         anchors.bottom: parent.bottom
         width: rootRect.anchors.leftMargin
         Repeater {
+            id: inpRepeater
             model: inner.input
             Rectangle {
                 id: inSlot
@@ -252,6 +264,7 @@ Item {
         anchors.bottom: parent.bottom
         width: rootRect.anchors.rightMargin
         Repeater {
+            id: outpRepeater
             model: inner.output
             Rectangle {
                 id: outSlot
@@ -317,17 +330,17 @@ Item {
     property var contextMenuOptions: [
         {
             name: "Convert to public Input",
-            action: function( data ) { root.isInputBlock = true; root.isOutputBlock = false; },
+            action: function( data, settings ) { root.isInputBlock = true; root.isOutputBlock = false; settings.blockIoChanged( root ); },
             enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isInputBlock; }
         },
         {
             name: "Convert to public Output",
-            action: function( data ) { root.isInputBlock = false; root.isOutputBlock = true; },
+            action: function( data, settings ) { root.isInputBlock = false; root.isOutputBlock = true; settings.blockIoChanged( root ); },
             enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isOutputBlock; }
         },
         {
             name: "Make Block private",
-            action: function( data ) { root.isInputBlock = false; root.isOutputBlock = false; },
+            action: function( data, settings ) { root.isInputBlock = false; root.isOutputBlock = false; settings.blockIoChanged( root ); },
             enabled: function( data, settings ) { return settings.isEditingSuperblock && (root.isInputBlock || root.isOutputBlock); }
         }
     ]

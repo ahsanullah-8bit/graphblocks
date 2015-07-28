@@ -4,7 +4,7 @@ import QtQuick 2.0
 Item {
     readonly property color backgroundColor: "#1C1C1C"
     readonly property color blockTextColor: "#969696"
-    readonly property color blockBorderColor: "#0092CC"
+    readonly property color blockBorderColor: "#779933"//"#0092CC"
     readonly property color blockBorderColorHighlight: "#DCD427"
     readonly property color blockColor1: "#323232"
     readonly property color blockColor2: "#282828"

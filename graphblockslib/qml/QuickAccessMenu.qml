@@ -54,7 +54,7 @@ Rectangle {
             placeholderText: "filter..."
             onTextChanged: {
                 filteredModel.clear();
-                var re = new RegExp(ff.text);
+                var re = new RegExp(ff.text, "i"); //Case insensitive
                 for(var i=0; i<blocksModel.count ; ++i) {
                     var block = blocksModel.get(i);
                     if(block.displayName.match(re)) {
