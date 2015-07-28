@@ -186,7 +186,7 @@ Item {
                 property var blockOuter: root
                 property alias lazyConnectTimer: theLazyConnectTimer
                 height: 20
-                color: "black"
+                color: slotInpMa.containsMouse?"grey":"black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
                     slotsIn[inner.input[index]] = inSlot;
@@ -197,6 +197,7 @@ Item {
                     property int lastConnect: -99999
                 }
                 MouseArea {
+                    id:slotInpMa
                     anchors.fill: parent
                     hoverEnabled: true
                     onEntered: {
@@ -258,12 +259,13 @@ Item {
                 property var block: inner
                 property var blockOuter: root
                 height: 20
-                color: "black"
+                color: slotOutpMa.containsMouse?"grey":"black"
                 Layout.fillWidth: true
                 Component.onCompleted: {
                     slotsOut[inner.output[index]] = outSlot;
                 }
                 MouseArea {
+                    id:slotOutpMa
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: "NoButton"

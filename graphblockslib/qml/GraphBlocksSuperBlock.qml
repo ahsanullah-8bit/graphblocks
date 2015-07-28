@@ -5,6 +5,8 @@ import QtQuick.Controls.Styles 1.4
 import "qrc:/qml/theme/";
 
 Item {
+    id: root
+    property var controlManager
     property string displayName: "Super Block"
     property string className: "superBlock"
     property var compo: Component {
@@ -18,25 +20,42 @@ Item {
             property var inp2
             property var outp1
             property var outp2
-            Text {
-                text: "[Graph]-->[Blocks]"
+            property var json
+            Component.onDestruction: {
+                root.controlManager.removeSuperblockControl( superblockInner );
+            }
+            function initialize() {
+                root.controlManager.createSuperblockControl( superblockInner );
+            }
+            function serialize() {
+                return { json: controlManager.serializeSuperblock( superblockInner ) };
+            }
+            Rectangle {
+                width: 100
+                height: 20
+
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: ma.containsMouse?Qt.lighter(ColorTheme.superblock1):ColorTheme.superblock1 }
+                    GradientStop { position: 1.0; color: ColorTheme.superblock2 }
+                }
+                radius: 20
+                Text {
+                    anchors.margins: 10
+                    anchors.fill: parent
+                    text: "[Grp]-[Blks]"
+                    font.pixelSize: 10
+                    color: "white"
+                    verticalAlignment: Qt.AlignVCenter
+                    horizontalAlignment: Qt.AlignHCenter
+                }
                 MouseArea {
+                    id: ma
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     hoverEnabled: true
                     propagateComposedEvents: false
                     onDoubleClicked: {
-                        gbw.visible = !gbw.visible;
-                    }
-                    GraphBlocksWindow {
-                        id: gbw
-                        control.input: ["inp1", "inp2"]
-                        control.output: ["outp1", "outp2"]
-                        control.sourceElement: superblockInner
-                        visible: false
-                        width: 800
-                        height: 500
-                        isEditingSuperblock: true
+                        root.controlManager.showSuperBlockControl( superblockInner );
                     }
                 }
             }

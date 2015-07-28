@@ -10,6 +10,36 @@ ApplicationWindow {
     id: root
     property alias control: graphBlockControl
     property bool isEditingSuperblock: false
+
+    property var currentSuperblock: null
+    property var superblockToControl
+
+    Component.onCompleted: {
+        superblockToControl = {};
+    }
+    function createSuperblockControl( superblock ) {
+        var superblockcontrol = superBlockControlCompo.createObject(controlParent, { input: superblock.input, output: superblock.output, sourceElement: superblock });
+        if( superblock.json ) {
+            superblockcontrol.loadGraph( superblock.json );
+        }
+        superblockToControl[ superblock ] = superblockcontrol;
+    }
+    function removeSuperblockControl( superblock ) {
+        delete superblockToControl[ superblock ];
+    }
+
+    function serializeSuperblock( superblock ) {
+        return superblockToControl[ superblock ].saveGraph();
+    }
+    function showSuperBlockControl( superblock ) {
+        if(superblockToControl[ superblock ]) {
+            superblockToControl[ superblock ].visible = true;
+        } else {
+            console.log("superblock had not been initialized");
+            createSuperBlockControl( superblock );
+        }
+    }
+
     ListModel {
         id: theBlocksModel
     }
@@ -27,13 +57,20 @@ ApplicationWindow {
     }
 
     function loadGraph(json, x, y) {
+        controlParent.children = "";
+        superblockToControl = {};
         graphBlockControl.loadGraph( json, {x:x, y:y} );
     }
     function loadGraphAsSuperblock(json, x, y) {
         graphBlockControl.loadGraphAsSuperblock( json, {x:x, y:y} );
     }
-    function saveGraph(json, x, y) {
-        return graphBlockControl.saveGraph();
+    function saveGraph() {
+        var json = graphBlockControl.saveGraph();
+        if( currentSuperblock ) {
+            currentSuperblock.inner.json = json;
+            return;
+        }
+        return json;
     }
     menuBar: MenuBar {
         Menu {
@@ -101,12 +138,12 @@ ApplicationWindow {
     GraphBlocksBasicLibrary {
         id: basicLib
     }
-//    Item {
-//        id: internalLib
-//        GraphBlocksSuperBlock {
-
-//        }
-//    }
+    Item {
+        id: internalLib
+        GraphBlocksSuperBlock {
+            controlManager: root
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -118,15 +155,31 @@ ApplicationWindow {
             blocksModel: theBlocksModel
             Component.onCompleted: {
                 importLibrary("basic", basicLib);
-                //importLibrary("internal", internalLib)
+                importLibrary("internal", internalLib)
             }
         }
-        GraphBlocksGraphControl {
-            id: graphBlockControl
+        Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            blocksModel: theBlocksModel
-            isEditingSuperblock: root.isEditingSuperblock
+            GraphBlocksGraphControl {
+                id: graphBlockControl
+                anchors.fill: parent
+                blocksModel: theBlocksModel
+                isEditingSuperblock: root.isEditingSuperblock
+            }
+            Item {
+                id: controlParent
+                anchors.fill: parent
+            }
+        }
+    }
+    Component {
+        id: superBlockControlCompo
+        GraphBlocksGraphControl {
+            anchors.fill: parent
+            blocksModel: theBlocksModel //TODO: if this does not work, give via prototype
+            isEditingSuperblock: true
+            visible: false
         }
     }
 }

@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick.Controls 1.3
 import "qrc:/qml/theme/";
 
 Item {
@@ -15,7 +16,7 @@ Item {
     property var ioBlocks
 
     property var classMap
-    property alias blocksModel: ctxMenu.blocksModel
+    property alias blocksModel: quickAccessMenu.blocksModel
     //property ListModel blocksModel: ListModel { }
 
     property Component blockComponent: Qt.createComponent("GraphBlocksBlock.qml")
@@ -100,6 +101,9 @@ Item {
         var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
         setupInner(newBlockInner);
         newBlock.inner = newBlockInner;
+        if(typeof(newBlockInner.initialize) === "function") {
+            newBlockInner.initialize();
+        }
         return newBlock;
     }
 
@@ -133,6 +137,9 @@ Item {
             } else {
                 var newBlockInner = compo.compo.createObject(newBlock.parentForInner, serBlock.innerProto);
                 newBlock.inner = newBlockInner;
+                if(typeof(newBlockInner.initialize) === "function") {
+                    newBlockInner.initialize();
+                }
             }
             savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = newBlock;
         }
@@ -185,6 +192,17 @@ Item {
         }
     }
 
+    Button {
+        x: 10
+        y: 10
+        z:901
+        id: breadcrumb
+        visible: isEditingSuperblock
+        text: "Back"
+        onClicked: {
+            root.visible = false;
+        }
+    }
     Flickable {
         id:flickable
         anchors.fill: parent
@@ -250,6 +268,9 @@ Item {
                 var blockCompo = blockItem.compo;
                 var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
                 newBlock.inner = newBlockInner;
+                if(typeof(newBlockInner.initialize) === "function") {
+                    newBlockInner.initialize();
+                }
                 newBlock.displayName = blockItem.displayName;
                 newBlock.className = blockItem.className?blockItem.className:blockItem.displayName;
             }
@@ -436,7 +457,7 @@ Item {
                     if (event.key === Qt.Key_Space) {
                         mouseXLastClick = mouseX;
                         mouseYLastClick = mouseY;
-                        ctxMenu.visible = true;
+                        quickAccessMenu.visible = true;
                         globalContextMenu.visible = false;
                     }
                 }
@@ -447,7 +468,7 @@ Item {
                 visible: fullScreenMouseArea.dragStartSlot != null
             }
             QuickAccessMenu {
-                id: ctxMenu
+                id: quickAccessMenu
                 x: fullScreenMouseArea.mouseXLastClick
                 y: fullScreenMouseArea.mouseYLastClick
                 z: 900

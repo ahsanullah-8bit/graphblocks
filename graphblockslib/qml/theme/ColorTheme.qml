@@ -22,5 +22,7 @@ Item {
     readonly property color contextMenu1: "#323232"
     readonly property color contextMenu2: "#323232"
     readonly property color contextMenuBorder: "#FF3333"
+    readonly property color superblock1: "#779933"
+    readonly property color superblock2: "#5C7829"
 }
 
