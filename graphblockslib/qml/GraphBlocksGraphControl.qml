@@ -107,6 +107,11 @@ Item {
         return newBlock;
     }
 
+//    function initSlotsWithDefaults( blockInner) {
+//        for(var inp in blockInner.input) {
+//            switch(typeof(blockInner[])
+//        }
+//    }
     function loadGraph(obj, offset) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
@@ -357,10 +362,106 @@ Item {
                     dragStartSlot = null;
                 }
                 function createConnectionWithoutGraphic(inpSource, inpName, outSource, outpName) {
-                    //TODO: use this for input output blocks. svae input output correctly
+                    //TODO: use this for input output blocks. save input output correctly
                 }
-
+                Component {
+                    id: lazyTimerComponent
+                    Timer {
+                        repeat: false
+                    }
+                }
+                Item {
+                    //TODO: connection deletion -> timer deletion!
+                    id: lazyConnectionTimers
+                }
+                property var lazyTimers
+                function getOrCreateLazyTimer(e1, e2, e3, e4) {
+                    var a, b, c, d
+                    if( !lazyTimers ) { lazyTimers = {}; }
+                    if( lazyTimers.contains( e1 ) )  {
+                        a = lazyTimers[ e1 ];
+                    } else {
+                        a = {};
+                        lazyTimers[ e1 ] = a;
+                    }
+                    if( a.contains( e2 ) )  {
+                        b = a[ e2 ];
+                    } else {
+                        b = {};
+                        a[ e2 ] = b;
+                    }
+                    if( b.contains( e3 ) )  {
+                        c = b[ e3 ];
+                    } else {
+                        c = {};
+                        b[ e3 ] = c;
+                    }
+                    if( c.contains( e4 ) )  {
+                        d = c[ e4 ];
+                    } else {
+                        d = lazyTimerComponent.createObject( lazyConnectionTimers );
+                        c[ e4 ] = d;
+                    }
+                    return d;
+                }
+                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName) {
+                    var typeIn = typeof inpElem[inpPropertyName];
+                    var typeOut = typeof outpElem[outpPropertyName];
+                    if(typeIn == "function" && typeOut !== "function" || typeIn !== "function" && typeOut == "function") {
+                        return;
+                    }
+                    if(typeIn == "function" && typeOut == "function") {
+                        outpElem[outpPropertyName].connect( inpElem[ inpPropertyName ] );
+                        // no initial call
+                        //inp.block[inp.propName]();
+                    } else {
+                        if(typeOut === "undefined" && typeIn !== "undefined") {
+                            // can not assign undefined to "double"...
+                            // exceptionally set output of connection to make types fit...
+                            if(typeIn === "number") {
+                                outpElem[outpPropName] = 0.0;
+                            } else {
+                                console.log("does this work? -> setting: " + typeOut + " to " + typeIn);
+                            }
+                        }
+                        var theSignal;
+//                        if( sig ) {
+//                            theSignal = sig;
+//                        } else {
+                            var chSigNam = outpPropName.charAt(0).toUpperCase();
+                            chSigNam += outpPropName.substring(1);
+                            theSignal = outpElem["on"+chSigNam+"Changed"];
+//                        }
+                        // can occasionally cause an error when an event is fired while the signaltarget-block is deleted.
+                        // no check is added here for performance
+                        var fn = function() { inpElem[inpPropertyName] = outpElem[outpPropName]; };
+                        if(inpElem.lazyConnect && (inpElem.lazyInputProps?inpElem.lazyInputProps.indexOf(inpPropName) !== -1:true)) {
+                            var lazyConnectTimer = getOrCreateLazyTimer(inpElem, inpPropertyName, outpElem, outpPropertyName);
+                            lazyConnectTimer.onTriggered.connect( fn );
+                            fn = function() {
+                                var lazyInterval = inpElem.lazyInterval?inpElem.lazyInterval:1000;
+                                var onlyIfNoChange = inpElem.onlyResting; //only set value, if x sec no change occured
+                                if( lazyConnectTimer.running) {
+                                    if( onlyIfNoChange ) {
+                                        lazyConnectTimer.restart();
+                                    }
+                                } else {
+                                    lazyConnectTimer.interval = lazyInterval;
+                                    lazyConnectTimer.start();
+                                }
+                            }
+                        }
+                        theSignal.connect( fn );
+                        //initial set value
+                        if(!outpElem.noInitialBind) {
+                            fn();
+                        }
+                    }
+                }
+                //TODO: see lines 194: Reduce code repetition. Make abstract "createConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, signal)"
                 function createConnection(slot1, slot2) {
+                    // input: value is input of a channel. value is set by connection. goes out of connection.
+                    // output: value is output of channel. value is received/read by connection.
                     //can connect?
                     if(typeof slot1 === "undefined" || typeof slot2 === "undefined") {
                         return;
@@ -393,7 +494,17 @@ Item {
                         // no initial call
                         //inp.block[inp.propName]();
                     } else {
-                        //forbid multiple inputs?
+                        if(typeOut === "undefined" && typeIn !== "undefined") {
+                            // can not assign undefined to "double"...
+                            // exceptionally set output of connection to make types fit...
+                            if(typeIn === "number") {
+                                outp.block[outp.propName] = 0.0;
+                            } else {
+                                //...
+                                console.log("does this work? -> setting: " + typeOut + " to " + typeIn);
+                            }
+                        }
+                        //forbid multiple inputs? yes!
                         Object.keys(connections[inp]).forEach(function(s2prop) {
                             // can have deleted connections
                             if(connections[inp].hasOwnProperty(s2prop)) {

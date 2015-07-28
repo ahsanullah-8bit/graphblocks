@@ -18,7 +18,7 @@ ApplicationWindow {
         superblockToControl = {};
     }
     function createSuperblockControl( superblock ) {
-        var superblockcontrol = superBlockControlCompo.createObject(controlParent, { input: superblock.input, output: superblock.output, sourceElement: superblock });
+        var superblockcontrol = superBlockControlCompo.createObject(controlParent, { input: superblock.input, output: superblock.output, sourceElement: superblock, classMap: root.control.classMap });
         if( superblock.json ) {
             superblockcontrol.loadGraph( superblock.json );
         }
