@@ -38,7 +38,9 @@ Canvas {
     onSlot1Changed: setupBinding1()
     onSlot2Changed: setupBinding2()
     Component.onDestruction: {
-        disconnectionMethod();
+        if(disconnectionMethod) {
+            disconnectionMethod();
+        }
 
         if(slot1) {
             slot1.parent.parent.onXChanged.disconnect(redoStart);

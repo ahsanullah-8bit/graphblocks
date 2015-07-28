@@ -3,6 +3,15 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.4
 import "qrc:/qml/theme/";
+// input of superblock starts outside and goes inside directly to an inputblock.
+// output of superblock starts at outputblock and goes outside to a normal block.
+// Connection is always established from outside, slot-setup is done from inside.
+// When IoBlock are created, their slots are published here.
+// inputblock: input-slots become inputslots of superblock.
+// outputblock: output-slots become outputslots of superblock.
+// when input-connection is established: logical link goes directly to inner inputblock.
+// when output-connection is established: logical link goes from outputblock to normal block.
+// When ioblock is made private, outside connection is lost/destroyed.
 
 Item {
     id: root
@@ -12,6 +21,9 @@ Item {
 
     Item {
         id: priv
+        //property var dynamicSlotNameToBlockUniqueIdAndInnerSlotName
+        property var dynamicSlotNameToInnerSlot
+
         property var inputMap
         property var outputMap
         property var outputToChangedMethod
@@ -27,6 +39,7 @@ Item {
             }
         }
     }
+
     function makeSafeName(name) {
         return name.replace(/[^\w]/gi, '_');
     }
@@ -47,33 +60,56 @@ Item {
         parent.outerBlock.redoLayout();
     }
 
-    function addBlockOutput( propname ) {
-        var pn = makeSafeName( propname );
-        if(priv.inputMap.hasOwnProperty( pn )) {
-            return false;
-        }
-        priv.inputMap[ pn ] = null;
-        if(-1 == input.indexOf( pn )) {
-            console.log(" pushin " );
-            input.push( pn );
-        }
-        parent.outerBlock.redoLayout();
-    }
-
-    function addBlockInput( propname ) {
-        var pn = makeSafeName( propname );
+    function addBlockOutput( innerSlot ) {
+        var pn = makeSafeName( innerSlot.blockOuter.displayName + innerSlot.propName );
         if(priv.outputMap.hasOwnProperty( pn )) {
             return false;
         }
-        priv.outputMap[ pn ] = null;
+        priv.outputMap[ pn ] = innerSlot;
         if(-1 == output.indexOf( pn )) {
-            console.log(" pushin ");
+            console.log(" puso");
+            console.log(" pushou " + pn + " is " + innerSlot.blockOuter.displayName + "." + innerSlot.propName);
             output.push( pn );
         }
         parent.outerBlock.redoLayout();
     }
 
+    function addBlockInput( innerSlot ) {
+        var pn = makeSafeName( innerSlot.blockOuter.displayName + innerSlot.propName );
+        if(priv.inputMap.hasOwnProperty( pn )) {
+            return false;
+        }
+        priv.inputMap[ pn ] = innerSlot;
+        if(-1 == input.indexOf( pn )) {
+            console.log(" piso");
+            console.log(" pushin " + pn + " is " + innerSlot.blockOuter.displayName + "." + innerSlot.propName);
+            input.push( pn );
+        }
+        parent.outerBlock.redoLayout();
+    }
+
+    function getBlockInput( pn ) {
+        //var pn = makeSafeName( innerSlot.block.displayName + innerSlot.propName );
+        if(!priv.inputMap.hasOwnProperty( pn )) {
+            console.log(" 22222");
+            console.log("dynamic block input connection error for " + pn);
+            return null;
+        }
+        return priv.inputMap[ pn ]
+    }
+
+    function getBlockOutput( pn ) {
+        //var pn = makeSafeName( innerSlot.block.displayName + innerSlot.propName );
+        if(!priv.outputMap.hasOwnProperty( pn )) {
+            console.log(" wwwww");
+            console.log("dynamic block output connection error for " + pn);
+            return null;
+        }
+        return priv.outputMap[ pn ]
+    }
+
     function setBlockInput( propname, value ) {
+        console.log("got222 " );
         console.log("got " + propname + " to " + value );
         if(priv.inputMap[propname] !== value) {
             priv.inputMap[propname] = value;

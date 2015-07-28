@@ -111,15 +111,29 @@ Item {
         if( !isEditingSuperblock ) {
             return;
         }
+        var so;
+        var si;
         if( block.isInputBlock ) {
-            sourceElement.removeBlockInput( block.displayName );
-            sourceElement.addBlockOutput( block.displayName );
+            for(so in block.slotsOut) {
+                sourceElement.removeBlockOutput( block.slotsOut[so] );
+            }
+            for(si in block.slotsIn) {
+                sourceElement.addBlockInput( block.slotsIn[si] );
+            }
         } else if( block.isOutputBlock ) {
-            sourceElement.removeBlockOutput( block.displayName );
-            sourceElement.addBlockInput( block.displayName );
+            for(si in block.slotsIn) {
+                sourceElement.removeBlockInput( block.slotsIn[si] );
+            }
+            for(so in block.slotsOut) {
+                sourceElement.addBlockOutput( block.slotsOut[so] );
+            }
         } else {
-            sourceElement.removeBlockOutput( block.displayName );
-            sourceElement.removeBlockInput( block.displayName );
+            for(si in block.slotsIn) {
+                sourceElement.removeBlockInput( block.slotsIn[si] );
+            }
+            for(so in block.slotsOut) {
+                sourceElement.removeBlockOutput( block.slotsOut[so] );
+            }
         }
     }
     function loadGraph(obj, offset) {
@@ -129,7 +143,7 @@ Item {
         var savedUniqueIdToBlock = [];
         for(var i= 0 ; i < blocks.length ; ++i) {
             var serBlock = blocks[i];
-            if(serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock) {
+            if(!isEditingSuperblock && ( serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock ) ) {
                 var ioBlock = ioBlocks[serBlock.blockProto.displayName];
                 savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = ioBlock;
                 ioBlock.x = serBlock.blockProto.x;
@@ -155,6 +169,7 @@ Item {
                 if(typeof(newBlockInner.initialize) === "function") {
                     newBlockInner.initialize();
                 }
+                blockIoChanged( newBlock );
             }
             savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = newBlock;
         }
@@ -532,8 +547,13 @@ Item {
                         });
                         connections[inp] = {};
                     }
+                    console.log("fetching inp " + (inp.block.isDynamic?inp.propName:"nonon"));
+                    console.log("fetching oup " + (outp.block.isDynamic?outp.propName:"nono"));
+                    var inpSrc = inp.block.isDynamic?inp.block.getBlockInput(inp.propName):inp;
+                    var outpSrc = outp.block.isDynamic?outp.block.getBlockOutput(outp.propName):outp;
 
-                    var disconnectLogicalFn = createLogicalConnection(inp.block, inp.propName, outp.block, outp.propName, !outp.block.noInitialBind, inp.block, inp.block.isDynamic, outp.block.isDynamic);
+                    //TODO: remove is dynamic, loops of superblocks... recursive?!
+                    var disconnectLogicalFn = createLogicalConnection(inpSrc.block, inpSrc.propName, outpSrc.block, outpSrc.propName, !outpSrc.block.noInitialBind, inpSrc.block, inpSrc.block.isDynamic, outpSrc.block.isDynamic);
 
                     var newConnection;
                     var disconnectFn = function() {

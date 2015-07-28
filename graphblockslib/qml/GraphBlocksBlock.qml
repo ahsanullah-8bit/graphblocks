@@ -60,7 +60,7 @@ Item {
 //    }
     Keys.onPressed: {
         if (event.key === Qt.Key_Delete) {
-            if(root.editable) {
+            if(root.editable && !root.isInputBlock && !root.isOutputBlock) {
                 cleanupAndDestroy();
                 event.accepted = true;
             }
@@ -184,6 +184,7 @@ Item {
     }
 
     ColumnLayout {
+        visible: !root.isInputBlock
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -259,6 +260,7 @@ Item {
 //        }
 //    }
     ColumnLayout {
+        visible: !root.isOutputBlock
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -331,12 +333,12 @@ Item {
         {
             name: "Convert to public Input",
             action: function( data, settings ) { root.isInputBlock = true; root.isOutputBlock = false; settings.blockIoChanged( root ); },
-            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isInputBlock; }
+            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isInputBlock && !root.inner.isDynamic; }
         },
         {
             name: "Convert to public Output",
             action: function( data, settings ) { root.isInputBlock = false; root.isOutputBlock = true; settings.blockIoChanged( root ); },
-            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isOutputBlock; }
+            enabled: function( data, settings ) { return settings.isEditingSuperblock && !root.isOutputBlock && !root.inner.isDynamic; }
         },
         {
             name: "Make Block private",
