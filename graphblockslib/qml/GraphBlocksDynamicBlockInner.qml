@@ -32,6 +32,30 @@ Item {
                 outputMap = {};
             }
         }
+        function removeBlockSlot( innerSlot, slotMap, slotArray, isInput ) {
+            var pn = makeSafeName( innerSlot );
+
+            if(!slotMap.hasOwnProperty( pn )) {
+                return;
+                //console.log("error while removing input");
+            }
+            var dynamicBlockOuter = root.parent.outerBlock;
+            var outerSlotAboutToBeDeleted = dynamicBlockOuter.getSlot(pn, isInput);
+            for( var conIdx in dynamicBlockOuter.connections ) {
+                var con = dynamicBlockOuter.connections[conIdx];
+                if(con.slot1 === outerSlotAboutToBeDeleted || con.slot2 === outerSlotAboutToBeDeleted) {
+                    con.destroy();
+                }
+            }
+            delete slotMap[ pn ];
+            var index1 = slotArray.indexOf( pn );
+            if (index1 > -1) {
+                slotArray.splice(index1, 1);
+            } else {
+                console.log("Error while rmoving input. inconsistent input maps");
+            }
+            root.parent.outerBlock.redoLayout();
+        }
     }
 
     function makeSafeName( innerSlot ) {
@@ -40,60 +64,11 @@ Item {
     }
 
     function removeBlockInput( innerSlot ) {
-        console.log("poooodoodod");
-        var pn = makeSafeName( innerSlot );
-        console.log("search " + pn);
-        for(var ii in priv.inputMap) {
-            console.log("k: " + ii + " was " + priv.inputMap[ii].propName);
-        }
-
-        if(!priv.inputMap.hasOwnProperty( pn )) {
-            return;
-            //console.log("error while removing input");
-        }
-        console.log("sdsdsd");
-        for( var conIdx in innerSlot.blockOuter.connections ) {
-            console.log("schlop connection for slot" + innerSlot.propName);
-            var con = innerSlot.blockOuter.connections[conIdx];
-            console.log("neq connection for slot -> " + con.slot1.propName + " 2: " + con.slot2.propName);
-            //TODO: they are not equal anymore becuase repeater reread them!
-            //TODO: write own repeater
-            if(con.slot1 === innerSlot || con.slot2 === innerSlot) {
-                console.log("destroyed connection for slot");
-                con.destroy();
-            }
-        }
-        delete priv.inputMap[ pn ];
-        var index1 = input.indexOf( pn );
-        if (index1 > -1) {
-            input.splice(index1, 1);
-        }
-        parent.outerBlock.redoLayout();
+        priv.removeBlockSlot( innerSlot, priv.inputMap, input, true);
     }
 
     function removeBlockOutput( innerSlot ) {
-        console.log("sdssweettttttt");
-        var pn = makeSafeName( innerSlot );
-        if(!priv.outputMap.hasOwnProperty( pn )) {
-            return;
-            //console.log("error while removing output");
-        }
-        console.log("sdseeee");
-        for( var conIdx in innerSlot.blockOuter.connections ) {
-            console.log("schlop2 connection for slot");
-            var con = innerSlot.blockOuter.connections[conIdx];
-            console.log("neqrrr connection for slot");
-            if(con.slot1 == innerSlot || con.slot2 == innerSlot) {
-                console.log("destroyed connection for slot");
-                con.destroy();
-            }
-        }
-        delete priv.outputMap[ pn ];
-        var index1 = output.indexOf( pn );
-        if (index1 > -1) {
-            output.splice(index1, 1);
-        }
-        parent.outerBlock.redoLayout();
+        priv.removeBlockSlot( innerSlot, priv.outputMap, output, false);
     }
 
     function addBlockOutput( innerSlot ) {
@@ -115,8 +90,6 @@ Item {
         }
         priv.inputMap[ pn ] = innerSlot;
         if(-1 == input.indexOf( pn )) {
-            console.log(" piso");
-            console.log(" pushin " + pn + " is " + innerSlot.blockOuter.displayName + "." + innerSlot.propName);
             input.push( pn );
         }
         parent.outerBlock.redoLayout();

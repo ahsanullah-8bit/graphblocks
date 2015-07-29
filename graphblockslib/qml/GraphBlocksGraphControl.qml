@@ -109,14 +109,13 @@ Item {
     }
 
     function blockIoChanged( block ) {
-        console.log("isedir");
+        console.log("io of block " + block.uniqueId + " changed");
         if( !isEditingSuperblock ) {
             return;
         }
         var so;
         var si;
         if( block.isInputBlock ) {
-            console.log("INININI");
             for(so in block.slotsOut) {
                 sourceElement.removeBlockOutput( block.slotsOut[so] );
             }
@@ -124,7 +123,6 @@ Item {
                 sourceElement.addBlockInput( block.slotsIn[si] );
             }
         } else if( block.isOutputBlock ) {
-            console.log("OUOUOUI");
             for(si in block.slotsIn) {
                 sourceElement.removeBlockInput( block.slotsIn[si] );
             }
@@ -132,7 +130,6 @@ Item {
                 sourceElement.addBlockOutput( block.slotsOut[so] );
             }
         } else {
-            console.log("PRIVATECASE");
             for(si in block.slotsIn) {
                 sourceElement.removeBlockInput( block.slotsIn[si] );
             }
@@ -547,7 +544,10 @@ Item {
                     var disconnectFn = function() {
                         disconnectLogicalFn();
                         if(slot1 && slot2) {
-                            delete connections[inp][outp];
+                            //var con = connections[inp][outp];
+                            //if( con ) {
+                                delete connections[inp][outp];
+                            //}
                         } else {
                             if( fullScreenMouseArea ) {
                                 Object.keys(connections).forEach(function(inp) {

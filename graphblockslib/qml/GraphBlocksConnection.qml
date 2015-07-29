@@ -43,16 +43,16 @@ Canvas {
         }
 
         if(slot1) {
-            slot1.parent.parent.onXChanged.disconnect(redoStart);
-            slot1.parent.parent.onYChanged.disconnect(redoStart);
-            slot1.parent.parent.onWidthChanged.disconnect(redoStart);
-            slot1.parent.parent.onHeightChanged.disconnect(redoStart);
+            slot1.blockOuter.onXChanged.disconnect(redoStart);
+            slot1.blockOuter.onYChanged.disconnect(redoStart);
+            slot1.blockOuter.onWidthChanged.disconnect(redoStart);
+            slot1.blockOuter.onHeightChanged.disconnect(redoStart);
         }
         if(slot2) {
-            slot2.parent.parent.onXChanged.disconnect(redoEnd);
-            slot2.parent.parent.onYChanged.disconnect(redoEnd);
-            slot2.parent.parent.onWidthChanged.disconnect(redoStart);
-            slot2.parent.parent.onHeightChanged.disconnect(redoStart);
+            slot2.blockOuter.onXChanged.disconnect(redoEnd);
+            slot2.blockOuter.onYChanged.disconnect(redoEnd);
+            slot2.blockOuter.onWidthChanged.disconnect(redoEnd);
+            slot2.blockOuter.onHeightChanged.disconnect(redoEnd);
         }
     }
 
@@ -65,31 +65,31 @@ Canvas {
 
     function setupBinding1() {
         if(_oldSlot1) {
-            _oldSlot1.parent.parent.onXChanged.disconnect(redoStart);
-            _oldSlot1.parent.parent.onYChanged.disconnect(redoStart);
-            _oldSlot1.parent.parent.onWidthChanged.disconnect(redoStart);
-            _oldSlot1.parent.parent.onHeightChanged.disconnect(redoStart);
+            _oldSlot1.blockOuter.onXChanged.disconnect(redoStart);
+            _oldSlot1.blockOuter.onYChanged.disconnect(redoStart);
+            _oldSlot1.blockOuter.onWidthChanged.disconnect(redoStart);
+            _oldSlot1.blockOuter.onHeightChanged.disconnect(redoStart);
         }
         if(slot1) {
-            slot1.parent.parent.onXChanged.connect(redoStart);
-            slot1.parent.parent.onYChanged.connect(redoStart);
-            slot1.parent.parent.onWidthChanged.connect(redoStart);
-            slot1.parent.parent.onHeightChanged.connect(redoStart);
+            slot1.blockOuter.onXChanged.connect(redoStart);
+            slot1.blockOuter.onYChanged.connect(redoStart);
+            slot1.blockOuter.onWidthChanged.connect(redoStart);
+            slot1.blockOuter.onHeightChanged.connect(redoStart);
             _oldSlot1 = slot1;
         }
     }
     function setupBinding2() {
         if(_oldSlot2) {
-            _oldSlot2.parent.parent.onXChanged.disconnect(redoEnd);
-            _oldSlot2.parent.parent.onYChanged.disconnect(redoEnd);
-            _oldSlot2.parent.parent.onWidthChanged.disconnect(redoEnd);
-            _oldSlot2.parent.parent.onHeightChanged.disconnect(redoEnd);
+            _oldSlot2.blockOuter.onXChanged.disconnect(redoEnd);
+            _oldSlot2.blockOuter.onYChanged.disconnect(redoEnd);
+            _oldSlot2.blockOuter.onWidthChanged.disconnect(redoEnd);
+            _oldSlot2.blockOuter.onHeightChanged.disconnect(redoEnd);
         }
         if(slot2) {
-            slot2.parent.parent.onXChanged.connect(redoEnd);
-            slot2.parent.parent.onYChanged.connect(redoEnd);
-            slot2.parent.parent.onWidthChanged.connect(redoEnd);
-            slot2.parent.parent.onHeightChanged.connect(redoEnd);
+            slot2.blockOuter.onXChanged.connect(redoEnd);
+            slot2.blockOuter.onYChanged.connect(redoEnd);
+            slot2.blockOuter.onWidthChanged.connect(redoEnd);
+            slot2.blockOuter.onHeightChanged.connect(redoEnd);
             _oldSlot2 = slot2;
         }
     }

@@ -43,7 +43,19 @@ Item {
     {
         id: slotsOutModel
     }
-    function compareArrayAnModel(arr, theModel) {
+    function addInputSlot(name, idx) {
+        inputSlotComponent.createObject( inpColumnLayout, {nameData:name, index:idx} );
+    }
+    function removeInputSlot(idx) {
+        inpColumnLayout.children[ idx ].destroy();
+    }
+    function addOutputSlot(name, idx) {
+        outputSlotComponent.createObject( outpColumnLayout, {nameData:name, index:idx} );
+    }
+    function removeOutputSlot(idx) {
+        outpColumnLayout.children[ idx ].destroy();
+    }
+    function compareArrayAnModel(arr, theModel, addFn, removeFn) {
         var foundIndices = {};
         for(var i=0; i<theModel.count; ++i) {
             foundIndices[ i ] = false;
@@ -52,14 +64,14 @@ Item {
         for(var s=0 ; s<arr.length ; ++s) {
             var contains = false;
             for(var i2=0; i2<theModel.count; ++i2) {
-                if(theModel.get(i2) === arr[s]) {
+                if(theModel.get(i2).nameData === arr[s]) {
                     contains = true;
                     foundIndices[ i2 ] = true;
                 }
             }
             if( contains == false ) {
-                console.log("append: " + arr[s]);
                 theModel.append( { nameData: arr[s] } );
+                if( addFn ) addFn( arr[s], s );
             }
         }
         var indicesToRemove = [];
@@ -69,35 +81,19 @@ Item {
             }
         }
         for(var i4=indicesToRemove.length-1; i4>=0; --i4) {
-            console.log("removed: " + i4);
-            theModel.remove(i4);
+            theModel.remove( indicesToRemove[i4] );
+            if( removeFn ) removeFn( indicesToRemove[i4] );
         }
-        console.log("finally: " + theModel.count);
         return theModel.count;
     }
 
     function redoLayout() {
-        //root.inputHeight = 0;
-        //root.outputHeight = 0;
-        console.log("inp: ");
         if(inner.input) {
-            root.inputHeight = (20 + 5) * compareArrayAnModel(inner.input, slotsInModel);
+            root.inputHeight = (20 + 5) * compareArrayAnModel(inner.input, slotsInModel, root.addInputSlot, root.removeInputSlot);
         }
-        console.log("outp: ");
         if(inner.output) {
-            root.outputHeight = (20 + 5) * compareArrayAnModel(inner.output, slotsOutModel);
+            root.outputHeight = (20 + 5) * compareArrayAnModel(inner.output, slotsOutModel, root.addOutputSlot, root.removeOutputSlot);
         }
-
-        //slotsOutModel.clear();
-        //inner.output.forEach(function(s){
-        //    slotsOutModel.append(s);
-        //});
-        //inpRepeater.model = 0;
-        //outpRepeater.model = 0;
-        //inpRepeater.model = inner.input;
-        //outpRepeater.model = inner.output;
-        //inpRepeater.update();
-        //outpRepeater.update();
     }
     function cleanupAndDestroy() {
         connections.forEach(function(con) {
@@ -193,13 +189,6 @@ Item {
                 }
                 onEditingFinished: root.displayName = text;
             }
-//            onChildrenChanged: {
-//                var h = 0;
-//                for(var chi=0; chi < theLayout.children.length ; ++chi) {
-//                    h += theLayout.children[chi].height;
-//                }
-//                myHeight = h;
-//            }
 
             Text {
                 id: classNameText
@@ -239,64 +228,103 @@ Item {
         }
     }
 
+    Component {
+        id:inputSlotComponent
+        Rectangle {
+            property string nameData
+            property int index
+            id: inSlot
+            z: 10
+            property bool isInput: true
+            property bool isOutput: false
+            property string propName: nameData //inner.input[index]
+            property var block: inner
+            property var blockOuter: root
+            property alias lazyConnectTimer: theLazyConnectTimer
+            height: 20
+            color: slotInpMa.containsMouse?"grey":"black"
+            Layout.fillWidth: true
+            Component.onCompleted: {
+                //slotsIn[inner.input[index]] = inSlot;
+                slotsIn[ nameData ] = inSlot;
+            }
+            Timer {
+                id: theLazyConnectTimer
+                repeat: false
+                property int lastConnect: -99999
+            }
+            MouseArea {
+                id:slotInpMa
+                anchors.fill: parent
+                hoverEnabled: true
+                onEntered: {
+                    toolTip.text = inSlot.propName;
+                    toolTip.visible = true;
+                }
+                onExited: {
+                    toolTip.visible = false;
+                }
+                acceptedButtons: "NoButton"
+                onMouseXChanged: repositionToolTip()
+                onMouseYChanged: repositionToolTip()
+                function repositionToolTip() {
+                    var xy = mapToItem(toolTip.parent, mouseX, mouseY);
+                    toolTip.x = xy.x;
+                    toolTip.y = xy.y - toolTip.totalHeight - 10;
+                }
+            }
+        }
+    }
+
+    Component {
+        id:outputSlotComponent
+        Rectangle {
+            property string nameData
+            property int index
+            id: outSlot
+            z: 10
+            property bool isInput: false
+            property bool isOutput: true
+            property string propName: nameData//inner.output[index]
+            property var block: inner
+            property var blockOuter: root
+            height: 20
+            color: slotOutpMa.containsMouse?"grey":"black"
+            Layout.fillWidth: true
+            Component.onCompleted: {
+                //slotsOut[inner.output[index]] = outSlot;
+                slotsOut[ nameData ] = outSlot;
+            }
+            MouseArea {
+                id:slotOutpMa
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: "NoButton"
+                onEntered: {
+                    toolTip.text = outSlot.propName;
+                    toolTip.visible = true;
+                }
+                onExited: {
+                    toolTip.visible = false;
+                }
+                onMouseXChanged: repositionToolTip()
+                onMouseYChanged: repositionToolTip()
+                function repositionToolTip() {
+                    var xy = mapToItem(toolTip.parent, mouseX, mouseY);
+                    toolTip.x = xy.x;
+                    toolTip.y = xy.y - toolTip.totalHeight -  10;
+                }
+            }
+        }
+    }
+
     ColumnLayout {
+        id: inpColumnLayout
         visible: !root.isInputBlock
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: rootRect.anchors.leftMargin
-        Repeater {
-            id: inpRepeater
-            model: slotsInModel
-            Rectangle {
-                id: inSlot
-                z: 10
-                property bool isInput: true
-                property bool isOutput: false
-                property string propName: nameData //inner.input[index]
-                property var block: inner
-                property var blockOuter: root
-                property alias lazyConnectTimer: theLazyConnectTimer
-                height: 20
-                color: slotInpMa.containsMouse?"grey":"black"
-                Layout.fillWidth: true
-                Component.onCompleted: {
-                    //slotsIn[inner.input[index]] = inSlot;
-                    slotsIn[ nameData ] = inSlot;
-                }
-                Timer {
-                    id: theLazyConnectTimer
-                    repeat: false
-                    property int lastConnect: -99999
-                }
-                MouseArea {
-                    id:slotInpMa
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: {
-                        toolTip.text = inSlot.propName;
-                        toolTip.visible = true;
-                    }
-                    onExited: {
-                        toolTip.visible = false;
-                    }
-                    acceptedButtons: "NoButton"
-                    onMouseXChanged: repositionToolTip()
-                    onMouseYChanged: repositionToolTip()
-                    function repositionToolTip() {
-                        var xy = mapToItem(toolTip.parent, mouseX, mouseY);
-                        toolTip.x = xy.x;
-                        toolTip.y = xy.y - toolTip.totalHeight - 10;
-                    }
-                }
-            }
-//            onItemAdded: {
-//                root.inputHeight += 20 + 5;
-//            }
-//            onItemRemoved: {
-//                root.inputHeight -= 20 + 5;
-//            }
-        }
     }
 //  Label all input
 //    ColumnLayout {
@@ -320,57 +348,12 @@ Item {
 //        }
 //    }
     ColumnLayout {
+        id: outpColumnLayout
         visible: !root.isOutputBlock
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: rootRect.anchors.rightMargin
-        Repeater {
-            id: outpRepeater
-            model: slotsOutModel
-            Rectangle {
-                id: outSlot
-                z: 10
-                property bool isInput: false
-                property bool isOutput: true
-                property string propName: nameData//inner.output[index]
-                property var block: inner
-                property var blockOuter: root
-                height: 20
-                color: slotOutpMa.containsMouse?"grey":"black"
-                Layout.fillWidth: true
-                Component.onCompleted: {
-                    //slotsOut[inner.output[index]] = outSlot;
-                    slotsOut[ nameData ] = outSlot;
-                }
-                MouseArea {
-                    id:slotOutpMa
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: "NoButton"
-                    onEntered: {
-                        toolTip.text = outSlot.propName;
-                        toolTip.visible = true;
-                    }
-                    onExited: {
-                        toolTip.visible = false;
-                    }
-                    onMouseXChanged: repositionToolTip()
-                    onMouseYChanged: repositionToolTip()
-                    function repositionToolTip() {
-                        var xy = mapToItem(toolTip.parent, mouseX, mouseY);
-                        toolTip.x = xy.x;
-                        toolTip.y = xy.y - toolTip.totalHeight -  10;
-                    }
-                }
-            }
-//            onItemAdded: {
-//                root.outputHeight += 20 + 5;
-//            }
-//            onItemRemoved: {
-//                root.outputHeight -= 20 + 5;
-//            }
-        }
     }
 //  Label all output
 //    ColumnLayout {
