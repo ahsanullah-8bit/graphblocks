@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.3
 import "qrc:/qml/theme/";
+import Clipboard 1.0
 
 //TODO: on deletion, all connections must be destroyed seperatly so they are disconnected. also blocks?
 Item {
@@ -33,15 +34,46 @@ Item {
             }
         }
     }
-    function saveGraph() {
+    function findAllConnectionsBetweenBlocks( blocks ) {
+        var ret = [];
+        var connections = parentForConnections.children;
+        for(var l= 0 ; l < connections.length ; ++l) {
+            var connection = connections[l];
+            if(   -1 !== blocks.indexOf( connection.slot1.blockOuter )
+               && -1 !== blocks.indexOf( connection.slot2.blockOuter )) {
+                ret.push( connection );
+            }
+        }
+        return ret;
+    }
+    function serializeBlocksAndConnections( blocks, recenter ) {
+        serializeBlocks( blocks, findAllConnectionsBetweenBlocks( blocks ), recenter );
+    }
+    function serializeBlocks( blocks, connections, recenter ) {
+        //Todo: check for connections between blocks
         var objToSerialize = {blocks:[], connections:[]};
-        for(var i= 0 ; i < parentForBlocks.children.length ; ++i) {
-            var block = parentForBlocks.children[i];
+
+        var loadedOffsetX = 0, loadedOffsetY = 0;
+        if(recenter) {
+            var loadedOffsetXmin = 999999, loadedOffsetYmin = 999999;
+            for(var i= 0 ; i < blocks.length ; ++i) {
+                var block = blocks[i];
+                loadedOffsetX = Math.max(loadedOffsetX, block.x + block.width);
+                loadedOffsetY = Math.max(loadedOffsetY, block.y + block.height);
+                loadedOffsetXmin = Math.min(loadedOffsetXmin, block.x);
+                loadedOffsetYmin = Math.min(loadedOffsetYmin, block.y);
+            }
+            loadedOffsetX = (loadedOffsetX + loadedOffsetXmin) * 0.5;
+            loadedOffsetY = (loadedOffsetY + loadedOffsetYmin) * 0.5;
+        }
+
+        for(var i= 0 ; i < blocks.length ; ++i) {
+            var block = blocks[i];
             var serializedInner = block.inner.serialize?block.inner.serialize():{/*maybeTodo*/};
             var serializedBlock = {
                 blockProto: {
-                    x:block.x,
-                    y:block.y,
+                    x:block.x - loadedOffsetX,
+                    y:block.y - loadedOffsetY,
                     displayName: block.displayName,
                     className: block.className?block.className:block.displayName,
                     uniqueId: block.uniqueId,
@@ -50,18 +82,22 @@ Item {
                 innerProto: serializedInner};
             objToSerialize.blocks.push( serializedBlock );
         }
-        for(var l= 0 ; l < parentForConnections.children.length ; ++l) {
-            var connection = parentForConnections.children[l];
-            var serializedConnection = {
-                s1: connection.slot1.blockOuter.uniqueId,
-                pn1: connection.slot1.propName,
-                s1Inp: connection.slot1.isInput,
-                s2: connection.slot2.blockOuter.uniqueId,
-                pn2: connection.slot2.propName};
-            objToSerialize.connections.push( serializedConnection );
+        if( connections ) {
+            for(var l= 0 ; l < connections.length ; ++l) {
+                var connection = connections[l];
+                var serializedConnection = {
+                    s1: connection.slot1.blockOuter.uniqueId,
+                    pn1: connection.slot1.propName,
+                    s1Inp: connection.slot1.isInput,
+                    s2: connection.slot2.blockOuter.uniqueId,
+                    pn2: connection.slot2.propName};
+                objToSerialize.connections.push( serializedConnection );
+            }
         }
-        //console.log(JSON.stringify( objToSerialize ));
         return objToSerialize;
+    }
+    function saveGraph() {
+        return serializeBlocks( parentForBlocks.children, parentForConnections.children );
     }
     Component {
         id: blockInpCompo
@@ -109,7 +145,6 @@ Item {
     }
 
     function blockIoChanged( block ) {
-        console.log("io of block " + block.uniqueId + " changed");
         if( !isEditingSuperblock ) {
             return;
         }
@@ -138,7 +173,7 @@ Item {
             }
         }
     }
-    function loadGraph(obj, offset) {
+    function loadGraph(obj, offsetx, offsety) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
         var connections = obj.connections;
@@ -148,10 +183,12 @@ Item {
             if(!isEditingSuperblock && ( serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock ) ) {
                 var ioBlock = ioBlocks[serBlock.blockProto.displayName];
                 savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = ioBlock;
-                ioBlock.x = serBlock.blockProto.x;
-                ioBlock.y = serBlock.blockProto.y;
+                ioBlock.x = serBlock.blockProto.x + offsetx;
+                ioBlock.y = serBlock.blockProto.y + offsety;
                 continue;
             }
+            serBlock.blockProto.x += offsetx;
+            serBlock.blockProto.y += offsety;
 
             var newBlock = root.blockComponent.createObject(parentForBlocks, serBlock.blockProto);
             newBlock.uniqueId += startUniqueId;
@@ -253,6 +290,7 @@ Item {
             property alias myScale: zoomer.scale
             transformOrigin: Item.TopLeft
             Item {
+                property alias blockContext: root
                 id: parentForBlocks
                 anchors.fill: parent
                 z:100
@@ -403,25 +441,25 @@ Item {
                 function getOrCreateLazyTimer(e1, e2, e3, e4) {
                     var a, b, c, d
                     if( !lazyTimers ) { lazyTimers = {}; }
-                    if( lazyTimers.contains( e1 ) )  {
+                    if( lazyTimers.hasOwnProperty( e1 ) )  {
                         a = lazyTimers[ e1 ];
                     } else {
                         a = {};
                         lazyTimers[ e1 ] = a;
                     }
-                    if( a.contains( e2 ) )  {
+                    if( a.hasOwnProperty( e2 ) )  {
                         b = a[ e2 ];
                     } else {
                         b = {};
                         a[ e2 ] = b;
                     }
-                    if( b.contains( e3 ) )  {
+                    if( b.hasOwnProperty( e3 ) )  {
                         c = b[ e3 ];
                     } else {
                         c = {};
                         b[ e3 ] = c;
                     }
-                    if( c.contains( e4 ) )  {
+                    if( c.hasOwnProperty( e4 ) )  {
                         d = c[ e4 ];
                     } else {
                         d = lazyTimerComponent.createObject( lazyConnectionTimers );
@@ -587,7 +625,15 @@ Item {
                         mouseYLastClick = mouseY;
                         quickAccessMenu.visible = true;
                         globalContextMenu.visible = false;
+                    } else if(event.key === Qt.Key_V && (event.modifiers & Qt.ControlModifier) ) {
+                        var cbdata = clipboard.text;
+                        if( cbdata === "") return;
+                        var blocks = JSON.parse( cbdata );
+                        root.loadGraph( blocks, mouseX, mouseY);
                     }
+                }
+                Clipboard {
+                    id: clipboard
                 }
             }
             GraphBlocksConnection {
