@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
+#include <QQmlEngine>
 
 class Clipboard : public QObject
 {
@@ -16,6 +17,13 @@ public:
         return QApplication::clipboard()->text();
     }
 
+    static QObject *qmlInstance(QQmlEngine *engine, QJSEngine *scriptEngine)
+    {
+        Q_UNUSED(engine);
+        Q_UNUSED(scriptEngine);
+
+        return new Clipboard;
+    }
 public slots:
 
     void setText(QString arg)

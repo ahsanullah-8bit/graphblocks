@@ -9,10 +9,13 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    initializeGraphBlocks();
+    GraphblocksContext* gbctx = initializeGraphBlocks();
 
     QQmlApplicationEngine engine;
+    addGraphBlocksLibrary( &engine, "userlibs", "gblibs" );
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
-    return app.exec();
+    int result = app.exec();
+    shutdownGraphBlocks( gbctx );
+    return result;
 }

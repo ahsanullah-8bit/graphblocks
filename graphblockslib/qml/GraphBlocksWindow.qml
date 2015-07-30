@@ -16,6 +16,7 @@ ApplicationWindow {
     Component.onCompleted: {
         superblockToControl = {};
     }
+    //// TODO: make private ////
     function createSuperblockControl( superblock ) {
         var superblockcontrol = superBlockControlCompo.createObject(controlParent, { input: superblock.input, output: superblock.output, sourceElement: superblock, classMap: root.control.classMap });
         if( superblock.json ) {
@@ -38,7 +39,7 @@ ApplicationWindow {
             createSuperBlockControl( superblock );
         }
     }
-
+    ////////
     ListModel {
         id: theBlocksModel
     }
@@ -47,11 +48,16 @@ ApplicationWindow {
         if(typeof graphBlockControl.classMap === "undefined") {
             graphBlockControl.classMap = {};
         }
-        var blocks = lib.children;
-        for(var i=0 ; i < blocks.length ; ++i) {
-            var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
-            graphBlockControl.classMap[cn] = blocks[i];
-            theBlocksModel.append(blocks[i]);
+        if( typeof( lib ) === "string" ) {
+            // folder
+            Library.loadFolderAsLib( lib );
+        } else {
+            var blocks = lib.children;
+            for(var i=0 ; i < blocks.length ; ++i) {
+                var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
+                graphBlockControl.classMap[cn] = blocks[i];
+                theBlocksModel.append(blocks[i]);
+            }
         }
     }
 

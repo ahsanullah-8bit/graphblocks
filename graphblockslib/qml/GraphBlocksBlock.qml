@@ -95,11 +95,6 @@ Item {
         if(inner.output) {
             root.outputHeight = (20 + 5) * compareArrayAnModel(inner.output, slotsOutModel, root.addOutputSlot, root.removeOutputSlot);
         }
-        //TODO: Connections not yet available?!
-        root.connections.forEach(function(con) {
-            con.redoStart();
-            con.redoEnd();
-        });
     }
     function cleanupAndDestroy() {
         connections.forEach(function(con) {
@@ -123,11 +118,11 @@ Item {
                 event.accepted = true;
             }
         } else if(event.key === Qt.Key_C && ( event.modifiers & Qt.ControlModifier ) ) {
-            clipboard.text = JSON.stringify( root.parent.blockContext.serializeBlocks( [ root ], [], true ) );
+            Clipboard.text = JSON.stringify( root.parent.blockContext.serializeBlocks( [ root ], [], true ) );
+        } else if(event.key === Qt.Key_X && ( event.modifiers & Qt.ControlModifier ) ) {
+            Clipboard.text = JSON.stringify( root.parent.blockContext.serializeBlocks( [ root ], [], true ) );
+            root.cleanupAndDestroy();
         }
-    }
-    Clipboard {
-        id: clipboard
     }
 
     Rectangle {
@@ -284,6 +279,17 @@ Item {
                     toolTip.y = xy.y - toolTip.totalHeight - 10;
                 }
             }
+            onYChanged: {
+                //Note this is only used for superblocks/dynamic blocks
+                if( root.connections ) {
+                    root.connections.forEach(function(con) {
+                        if( inSlot === con.slot1 || inSlot === con.slot2) {
+                            con.redoStart();
+                            con.redoEnd();
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -324,6 +330,17 @@ Item {
                     var xy = mapToItem(toolTip.parent, mouseX, mouseY);
                     toolTip.x = xy.x;
                     toolTip.y = xy.y - toolTip.totalHeight -  10;
+                }
+            }
+            onYChanged: {
+                //Note this is only used for superblocks/dynamic blocks
+                if( root.connections ) {
+                    root.connections.forEach(function(con) {
+                        if( inSlot === con.slot1 || inSlot === con.slot2) {
+                            con.redoStart();
+                            con.redoEnd();
+                        }
+                    });
                 }
             }
         }

@@ -37,6 +37,7 @@ Canvas {
     property var _oldSlot2
     onSlot1Changed: setupBinding1()
     onSlot2Changed: setupBinding2()
+
     Component.onDestruction: {
         if(disconnectionMethod) {
             disconnectionMethod();

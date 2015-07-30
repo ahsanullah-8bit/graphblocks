@@ -4,6 +4,7 @@ import QtQuick.Window 2.2
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.1
 import FileIO 1.0
+import Library 1.0
 
 ApplicationWindow {
     title: qsTr("GraphBlocksTest")

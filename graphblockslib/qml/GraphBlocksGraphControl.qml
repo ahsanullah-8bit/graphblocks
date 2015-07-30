@@ -296,6 +296,7 @@ Item {
                 z:100
             }
             Item {
+                property alias connectionContext: root
                 id: parentForConnections
                 property alias connectionsOwner: fullScreenMouseArea
                 anchors.fill: parent
@@ -626,20 +627,20 @@ Item {
                         quickAccessMenu.visible = true;
                         globalContextMenu.visible = false;
                     } else if(event.key === Qt.Key_V && (event.modifiers & Qt.ControlModifier) ) {
-                        var cbdata = clipboard.text;
+                        var cbdata = Clipboard.text;
                         if( cbdata === "") return;
                         var blocks = JSON.parse( cbdata );
                         root.loadGraph( blocks, mouseX, mouseY);
                     }
                 }
-                Clipboard {
-                    id: clipboard
-                }
             }
-            GraphBlocksConnection {
-                z: 1
-                id: previewConnection
-                visible: fullScreenMouseArea.dragStartSlot != null
+            Item {
+                property alias connectionContext: root
+                GraphBlocksConnection {
+                    z: 1
+                    id: previewConnection
+                    visible: fullScreenMouseArea.dragStartSlot != null
+                }
             }
             QuickAccessMenu {
                 id: quickAccessMenu
