@@ -173,14 +173,19 @@ Item {
             }
         }
     }
-    function loadGraph(obj, offsetx, offsety) {
+    function loadGraph(obj, offsetx, offsety, ignoreIo) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
         var connections = obj.connections;
         var savedUniqueIdToBlock = [];
+        var ignoredBlocks = [];
         for(var i= 0 ; i < blocks.length ; ++i) {
             var serBlock = blocks[i];
             if(!isEditingSuperblock && ( serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock ) ) {
+                if(ignoreIo) {
+                    ignoredBlocks.push( serBlock.blockProto.uniqueId );
+                    continue;
+                }
                 var ioBlock = ioBlocks[serBlock.blockProto.displayName];
                 savedUniqueIdToBlock[serBlock.blockProto.uniqueId] = ioBlock;
                 ioBlock.x = serBlock.blockProto.x + offsetx;
@@ -215,6 +220,9 @@ Item {
         nextUniqueId++;
         for(var l= 0 ; l < connections.length ; ++l) {
             var connection = connections[l];
+            if( -1 !== ignoredBlocks.indexOf(connection.s1) || -1 !== ignoredBlocks.indexOf(connection.s2) ) {
+                continue;
+            }
             var b1 = savedUniqueIdToBlock[connection.s1];
             var b2 = savedUniqueIdToBlock[connection.s2];
             var s1 = b1.getSlot(connection.pn1, connection.s1Inp);
@@ -312,19 +320,14 @@ Item {
                 anchors.fill: parent
 
                 onDropped: {
-                    if(! drop.source.myCompo) {
-                        drop.accepted = false;
-                        return;
-                    }
-//                    var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x, drop.source.y);
-//                    var newBlock = root.blockComponent.createObject(parentForBlocks, {x: xy.x, y: xy.y, uniqueId:root.nextUniqueId});
-//                    root.nextUniqueId++;
-//                    var newBlockInner = drop.source.myCompo.createObject(newBlock.parentForInner, {});
-//                    newBlock.inner = newBlockInner;
-//                    newBlock.displayName = drop.source.text;
-//                    newBlock.className = drop.source.currentClassName;
                     var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x, drop.source.y);
-                    zoomer.createBlock(drop.source.currentClassName, xy.x, xy.y);
+                    if( drop.source.myCompo) {
+                        zoomer.createBlock(drop.source.currentClassName, xy.x, xy.y);
+                    } else if(drop.source.myGraph) {
+                        root.loadGraph( drop.source.myGraph, xy.x, xy.y, true);
+                    } else {
+                        drop.accepted = false;
+                    }
                 }
             }
             function createBlock(className, x, y) {

@@ -336,7 +336,7 @@ Item {
                 //Note this is only used for superblocks/dynamic blocks
                 if( root.connections ) {
                     root.connections.forEach(function(con) {
-                        if( inSlot === con.slot1 || inSlot === con.slot2) {
+                        if( outSlot === con.slot1 || outSlot === con.slot2) {
                             con.redoStart();
                             con.redoEnd();
                         }

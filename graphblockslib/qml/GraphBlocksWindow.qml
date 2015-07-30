@@ -4,6 +4,7 @@ import QtQuick.Window 2.2
 import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.1
 import FileIO 1.0
+import Library 1.0
 
 ApplicationWindow {
     title: qsTr("GraphBlocks")
@@ -15,6 +16,11 @@ ApplicationWindow {
 
     Component.onCompleted: {
         superblockToControl = {};
+        var ser = Library.loadLibs();
+        var libs = JSON.parse( ser );
+        for(var lib in libs) {
+            importLibrary(libs[lib].name, libs[lib].entries);
+        }
     }
     //// TODO: make private ////
     function createSuperblockControl( superblock ) {
@@ -48,16 +54,25 @@ ApplicationWindow {
         if(typeof graphBlockControl.classMap === "undefined") {
             graphBlockControl.classMap = {};
         }
-        if( typeof( lib ) === "string" ) {
-            // folder
-            Library.loadFolderAsLib( lib );
+        var blocks;
+        if( lib.children ) {
+            blocks = lib.children;
         } else {
-            var blocks = lib.children;
-            for(var i=0 ; i < blocks.length ; ++i) {
+            blocks = lib;
+        }
+        for(var i=0 ; i < blocks.length ; ++i) {
+            if( blocks[i].compo ) {
                 var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
                 graphBlockControl.classMap[cn] = blocks[i];
-                theBlocksModel.append(blocks[i]);
             }
+            var block = {
+                displayName: blocks[i].displayName?blocks[i].className?blocks[i].className:blocks[i].displayName:blocks[i].displayName,
+                className: blocks[i].className,
+                compo: blocks[i].compo,
+                graph: blocks[i].graph
+            };
+
+            theBlocksModel.append(block);
         }
     }
 

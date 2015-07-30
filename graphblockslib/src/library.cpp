@@ -21,6 +21,7 @@ bool Library::addLibrary(const QString &libname, const QString &folder)
         return false;
     }
     m_libToFolder[ libname ] = f.absolutePath();
+    m_folderToLib[ f.absolutePath() ] = libname;
     return true;
 }
 
@@ -101,31 +102,47 @@ bool Library::deleteGraphFromLib(const QString &libname, const QString &name)
 QString Library::loadFolderAsLib(const QString &libname, const QString &folder)
 {
     if( addLibrary(libname, folder) ) {
+        return loadLib( libname );
     }
+    //Note: when called a second time, this will load nothing
+    return "";
 }
 
 QString Library::loadLibs()
 {
-    QString allLibs("{");
-    foreach(QString libname, m_libToFolder) {
-        allLibs += loadLib( libname );
-        allLibs += ",";
+    QString allLibs("[");
+    bool oneOrMoreLoaded = false;
+    foreach(QString libname, m_libToFolder.keys()) {
+        QString loadedLib = loadLib( libname );
+        allLibs += loadedLib;
+        if(!loadedLib.isEmpty()) {
+            allLibs += ",";
+            oneOrMoreLoaded = true;
+        }
     }
-    allLibs.replace(allLibs.length() - 1, "}");
+    if( oneOrMoreLoaded ) {
+        allLibs[allLibs.length() - 1] = QChar(']');
+    }
+    else
+    {
+        allLibs += "]";
+    }
     return allLibs;
 }
 
 QString Library::loadLib(const QString &libname)
 {
-    QString libStr("{");
+    qDebug() << "Loading: " << libname << " folder: " << m_libToFolder[ libname ];
+    QString libStr("{\"libname\":\"" + libname + "\", \"entries\":[");
     QDir folder( m_libToFolder[ libname ] );
+    bool oneOrMoreLoaded = false;
     foreach( QString f, folder.entryList( QStringList("*.blocks"), QDir::Files | QDir::Readable, QDir::Name))
     {
         QFile file( folder.absoluteFilePath(f) );
-        QString fileContentStr("{name:");
+        QString fileContentStr("{\"displayName\":");
         fileContentStr += "\"";
         fileContentStr += QFileInfo(f).baseName().replace("\"", "_"); //TODO: remove special chars
-        fileContentStr += "\", graph:";
+        fileContentStr += "\", \"graph\":";
         if ( file.open(QIODevice::ReadOnly) ) {
             QString line;
             QTextStream t( &file );
@@ -135,13 +152,24 @@ QString Library::loadLib(const QString &libname)
              } while (!line.isNull());
 
             file.close();
+            fileContentStr += "}";
         } else {
-            return QString();
+            fileContentStr = "";
         }
         libStr += fileContentStr;
-        libStr += ",";
+        if(!fileContentStr.isEmpty()) {
+            libStr += ",";
+            oneOrMoreLoaded = true;
+        }
     }
-    libStr.replace(libStr.length() - 1, "}");
-    qDebug() << "the whole lib: " << libStr;
+    if( oneOrMoreLoaded )
+    {
+        libStr[libStr.length() - 1] = QChar(']');
+    }
+    else
+    {
+        libStr += "]";
+    }
+    libStr += "}";
     return libStr;
 }

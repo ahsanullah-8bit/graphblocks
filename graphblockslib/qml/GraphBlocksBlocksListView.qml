@@ -9,13 +9,15 @@ ListView {
     id:root
     property var blocksModel
 
+    clip: true
     model: blocksModel
     delegate: Text {
         id: elem
         text: displayName
         property string currentClassName
         renderType: Text.NativeRendering
-        property Component myCompo: compo
+        property var myCompo: compo
+        property var myGraph: graph
         property bool dragActive: dragArea.drag.active
         property real dragStartX
         property real dragStartY
