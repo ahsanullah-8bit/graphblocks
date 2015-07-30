@@ -419,6 +419,11 @@ Item {
             name: "Make Block private",
             action: function( data, settings ) { root.isInputBlock = false; root.isOutputBlock = false; settings.blockIoChanged( root ); },
             enabled: function( data, settings ) { return settings.isEditingSuperblock && (root.isInputBlock || root.isOutputBlock); }
+        },
+        {
+            name: "Save Block to Library",
+            action: function( data, settings ) { settings.saveBlockToLibrary( root ); },
+            enabled: function( data, settings ) { return  !(root.isInputBlock || root.isOutputBlock); }
         }
     ]
 }

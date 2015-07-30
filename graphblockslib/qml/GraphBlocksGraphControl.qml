@@ -2,6 +2,7 @@ import QtQuick 2.0
 import QtQuick.Controls 1.3
 import "qrc:/qml/theme/";
 import Clipboard 1.0
+import Library 1.0
 
 //TODO: on deletion, all connections must be destroyed seperatly so they are disconnected. also blocks?
 Item {
@@ -49,8 +50,16 @@ Item {
     function serializeBlocksAndConnections( blocks, recenter ) {
         serializeBlocks( blocks, findAllConnectionsBetweenBlocks( blocks ), recenter );
     }
+
+    function saveBlockToLibrary( block ) {
+        var serBlocks = serializeBlocks([block], [], true);
+        if( Library.addGraphToLib("", block.displayName, JSON.stringify( serBlocks ) ) ) {
+            var todo = {displayName: block.displayName, graph: serBlocks};
+            importBlockToLib( todo );
+        }
+    }
+
     function serializeBlocks( blocks, connections, recenter ) {
-        //Todo: check for connections between blocks
         var objToSerialize = {blocks:[], connections:[]};
 
         var loadedOffsetX = 0, loadedOffsetY = 0;
@@ -173,12 +182,40 @@ Item {
             }
         }
     }
-    function loadGraph(obj, offsetx, offsety, ignoreIo) {
+    function loadGraph(obj, offsetx, offsety, ignoreIo, recenter) {
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
         var connections = obj.connections;
         var savedUniqueIdToBlock = [];
         var ignoredBlocks = [];
+
+        var xmax = 0, ymax = 0;
+        var xmin = 999999, ymin = 999999;
+        for(var i= 0 ; i < blocks.length ; ++i) {
+            var block = blocks[i];
+            xmax = Math.max(xmax, block.blockProto.x + 90);
+            ymax = Math.max(ymax, block.blockProto.y + 50);
+            xmin = Math.min(xmin, block.blockProto.x);
+            ymin = Math.min(ymin, block.blockProto.y);
+        }
+
+        if(recenter) {
+            var xcorr = (xmin + xmax) * 0.5;
+            var ycorr = (ymin + ymax) * 0.5;
+            offsetx -= xcorr;
+            offsety -= ycorr;
+            xmin -= xcorr;
+            ymin -= ycorr;
+            xmax -= xcorr;
+            ymax -= ycorr;
+        }
+        if(offsetx - xmin < 0) {
+            offsetx = xmin;
+        }
+        if(offsety - ymin < 0) {
+            offsety = ymin;
+        }
+
         for(var i= 0 ; i < blocks.length ; ++i) {
             var serBlock = blocks[i];
             if(!isEditingSuperblock && ( serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock ) ) {
@@ -320,17 +357,24 @@ Item {
                 anchors.fill: parent
 
                 onDropped: {
-                    var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x, drop.source.y);
-                    if( drop.source.myCompo) {
-                        zoomer.createBlock(drop.source.currentClassName, xy.x, xy.y);
-                    } else if(drop.source.myGraph) {
-                        root.loadGraph( drop.source.myGraph, xy.x, xy.y, true);
+                    if( drop.source.myCompo || drop.source.myGraph) {
+                        var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x+drop.source.width*0.5, drop.source.y+drop.source.height*0.5);
+                        //var xy = parentForBlocks.mapFromItem(fullScreenMouseArea, fullScreenMouseArea.mouseX, fullScreenMouseArea.mouseY);
+                        zoomer.createBlock(drop.source, xy.x, xy.y);
                     } else {
                         drop.accepted = false;
                     }
                 }
             }
-            function createBlock(className, x, y) {
+            //blockinfo has either a component or graph member to instantiate a new block/graph
+            //currentClassName: dragDrop, className: fromModel, myGraph: fromDragDrop: Textdelegate, graph: from Model directly: QWuickAccesssMenu
+            function createBlock(blockInfo, x, y) {
+                if( (blockInfo.graph || blockInfo.myGraph) && !(blockInfo.isClass || blockInfo.myIsClass) ) {
+                    //console.log("mygr: " + blockInfo.displayName + " gr: " + blockInfo.graph + " js: " + JSON.stringify( blockInfo ));
+                    root.loadGraph( blockInfo.myGraph?blockInfo.myGraph:blockInfo.graph, x, y, true, true);
+                    return;
+                }
+                var className = blockInfo.currentClassName?blockInfo.currentClassName:blockInfo.className;
                 var newBlock = root.blockComponent.createObject(parentForBlocks, {x: x, y: y, uniqueId:root.nextUniqueId});
                 root.nextUniqueId++;
                 newBlock.contextMenu = globalContextMenu;
@@ -655,7 +699,7 @@ Item {
                 visible: false
                 //blocksModel: root.blocksModel
                 onCreateBlock: {
-                    zoomer.createBlock(block.className?block.className:block.displayName, x, y);
+                    zoomer.createBlock(block, x, y);
                     visible = false;
                 }
             }

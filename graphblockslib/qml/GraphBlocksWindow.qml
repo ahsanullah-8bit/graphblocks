@@ -61,19 +61,22 @@ ApplicationWindow {
             blocks = lib;
         }
         for(var i=0 ; i < blocks.length ; ++i) {
-            if( blocks[i].compo ) {
-                var cn = blocks[i].className?blocks[i].className:blocks[i].displayName;
-                graphBlockControl.classMap[cn] = blocks[i];
-            }
-            var block = {
-                displayName: blocks[i].displayName?blocks[i].className?blocks[i].className:blocks[i].displayName:blocks[i].displayName,
-                className: blocks[i].className,
-                compo: blocks[i].compo,
-                graph: blocks[i].graph
-            };
-
-            theBlocksModel.append(block);
+            importBlockToLib(blocks[i]);
         }
+    }
+    function importBlockToLib( blockInfo ) {
+        if( blockInfo.compo ) {
+            var cn = blockInfo.className?blockInfo.className:blockInfo.displayName;
+            graphBlockControl.classMap[cn] = blockInfo;
+        }
+        var block = {
+            displayName: blockInfo.displayName?blockInfo.className?blockInfo.className:blockInfo.displayName:blockInfo.displayName,
+            className: blockInfo.className?blockInfo.className:blockInfo.displayName,
+            compo: blockInfo.compo,
+            graph: blockInfo.graph,
+            isClass: blockInfo.compo !== undefined && blockInfo.compo !== null
+        };
+        theBlocksModel.append(block);
     }
 
     function loadGraph(json, x, y) {

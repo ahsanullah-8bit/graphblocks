@@ -18,6 +18,7 @@ ListView {
         renderType: Text.NativeRendering
         property var myCompo: compo
         property var myGraph: graph
+        property bool myIsClass: isClass
         property bool dragActive: dragArea.drag.active
         property real dragStartX
         property real dragStartY

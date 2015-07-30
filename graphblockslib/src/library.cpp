@@ -49,13 +49,16 @@ bool Library::checkIfGraphExists(const QString &libname, const QString &name)
 
 bool Library::addGraphToLib(const QString &libname, const QString &name, const QString &data)
 {
-    if( m_libToFolder.contains( libname ))
+    QString ln = libname;
+    if( m_libToFolder.contains( libname ) )
     {
-        qDebug() << "Unknown Library while saving graph";
-        return false;
+        if( libname != "" ) return false;
+        ln = m_libToFolder.firstKey();
+        qDebug() << "Unknown Library while saving graph, using first lib: " + ln;
     }
-    QDir folder( m_libToFolder[ libname ] );
+    QDir folder( m_libToFolder[ ln ] );
     QString filename = folder.absoluteFilePath( name + ".blocks" );
+    qDebug() << "fn " + filename;
     if (filename.isEmpty())
         return false;
     if(filename.startsWith("file:///")) {
@@ -69,11 +72,13 @@ bool Library::addGraphToLib(const QString &libname, const QString &name, const Q
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
 
+    qDebug() << "opened " + file.fileName();
     QTextStream out(&file);
     out << data;
 
     file.close();
 
+    qDebug() << "done";
     return true;
 }
 
