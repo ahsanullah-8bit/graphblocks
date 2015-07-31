@@ -104,9 +104,9 @@ Item {
         }
     }
     Item {
-        id: blockSmaller
-        property string displayName: ">"
-        property string className: "smallerThan"
+        id: blockLess
+        property string displayName: "<"
+        property string className: "lessThan"
         property var compo: Component {
             Item {
                 property var input: ["op1", "op2"]
@@ -118,9 +118,9 @@ Item {
         }
     }
     Item {
-        id: blockSmallerEq
+        id: blockLessEq
         property string displayName: "<="
-        property string className: "smallerEqual"
+        property string className: "lessEqual"
         property var compo: Component {
             Item {
                 property var input: ["op1", "op2"]
