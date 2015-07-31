@@ -82,7 +82,7 @@ ApplicationWindow {
     function loadGraph(json, x, y) {
         controlParent.children = "";
         superblockToControl = {};
-        graphBlockControl.loadGraph( json, {x:x, y:y} );
+        graphBlockControl.loadGraph( json, x, y );
     }
     function loadGraphAsSuperblock(json, x, y) {
         graphBlockControl.loadGraphAsSuperblock( json, {x:x, y:y} );
@@ -151,7 +151,7 @@ ApplicationWindow {
             var ser = openFile.read();
             //console.log( "file: " + ser );
             graphBlockControl.clear();
-            graphBlockControl.loadGraph( JSON.parse( ser ), {x:0, y:0} );
+            graphBlockControl.loadGraph( JSON.parse( ser ), 0, 0 );
         }
     }
     FileIO {

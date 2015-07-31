@@ -210,10 +210,10 @@ Item {
             ymax -= ycorr;
         }
         if(offsetx - xmin < 0) {
-            offsetx = xmin;
+            //offsetx = xmin;
         }
         if(offsety - ymin < 0) {
-            offsety = ymin;
+            //offsety = ymin;
         }
 
         for(var i= 0 ; i < blocks.length ; ++i) {

@@ -76,6 +76,76 @@ Item {
         }
     }
     Item {
+        id: blockGreater
+        property string displayName: ">"
+        property string className: "greaterThan"
+        property var compo: Component {
+            Item {
+                property var input: ["op1", "op2"]
+                property var output: ["result"]
+                property real op1
+                property real op2
+                property real result: op1 > op2
+            }
+        }
+    }
+    Item {
+        id: blockGreaterEq
+        property string displayName: ">="
+        property string className: "greaterEqual"
+        property var compo: Component {
+            Item {
+                property var input: ["op1", "op2"]
+                property var output: ["result"]
+                property real op1
+                property real op2
+                property real result: op1 >= op2
+            }
+        }
+    }
+    Item {
+        id: blockSmaller
+        property string displayName: ">"
+        property string className: "smallerThan"
+        property var compo: Component {
+            Item {
+                property var input: ["op1", "op2"]
+                property var output: ["result"]
+                property real op1
+                property real op2
+                property real result: op1 < op2
+            }
+        }
+    }
+    Item {
+        id: blockSmallerEq
+        property string displayName: "<="
+        property string className: "smallerEqual"
+        property var compo: Component {
+            Item {
+                property var input: ["op1", "op2"]
+                property var output: ["result"]
+                property real op1
+                property real op2
+                property real result: op1 <= op2
+            }
+        }
+    }
+    Item {
+        id: blockEqual
+        property string displayName: "=="
+        property string className: "equals"
+        property var compo: Component {
+            Item {
+                property var input: ["op1", "op2"]
+                property var output: ["result"]
+                property real op1
+                property real op2
+                property real result: op1 == op2
+            }
+        }
+    }
+    Item {
         id: blockAdd
         property string displayName: "Add Real"
         property var compo: Component {
