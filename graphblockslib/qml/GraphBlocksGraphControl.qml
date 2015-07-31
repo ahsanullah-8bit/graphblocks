@@ -183,6 +183,8 @@ Item {
         }
     }
     function loadGraph(obj, offsetx, offsety, ignoreIo, recenter) {
+        if( offsetx === undefined ) offsetx = 0;
+        if( offsety === undefined ) offsety = 0;
         var startUniqueId = nextUniqueId;
         var blocks = obj.blocks;
         var connections = obj.connections;
@@ -210,10 +212,10 @@ Item {
             ymax -= ycorr;
         }
         if(offsetx - xmin < 0) {
-            //offsetx = xmin;
+            offsetx = xmin;
         }
         if(offsety - ymin < 0) {
-            //offsety = ymin;
+            offsety = ymin;
         }
 
         for(var i= 0 ; i < blocks.length ; ++i) {
