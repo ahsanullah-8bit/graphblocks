@@ -542,7 +542,13 @@ Item {
                         fn = inpElem[ inpPropertyName ];
                         theSignal = outpElem[outpPropertyName];
                     } else {
-                        fn = function() { inpElem[inpPropertyName] = outpElem[outpPropertyName]; };
+                        fn = function() {
+                            //TODO: typesafety
+                            if( typeof( inpElem[inpPropertyName] ) === "number" && typeof( outpElem[outpPropertyName] ) === "undefined" ) {
+                                outpElem[outpPropertyName] = 0;
+                            }
+                            inpElem[inpPropertyName] = outpElem[outpPropertyName];
+                        };
                         var chSigNam = outpPropertyName.charAt(0).toUpperCase();
                         chSigNam += outpPropertyName.substring(1);
                         theSignal = outpElem["on"+chSigNam+"Changed"];

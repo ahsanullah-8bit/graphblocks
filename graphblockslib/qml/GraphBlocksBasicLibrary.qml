@@ -490,16 +490,20 @@ Item {
         property string displayName: "IfVal"
         property var compo: Component {
             Item {
-                property var input: ["inp","condition"]
+                property var input: ["condition", "inp", "elseInp"]
                 property var output: ["outp"]
                 property var inp
-                property var outp: inp
+                property var elseInp
+                property var outp
                 property bool condition: false
                 onInpChanged: trig()
+                onElseInpChanged: trig()
                 onConditionChanged: trig()
                 function trig() {
                     if(condition) {
                         outp = inp;
+                    } else {
+                        outp = elseInp;
                     }
                 }
             }

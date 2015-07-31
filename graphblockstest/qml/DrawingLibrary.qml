@@ -13,12 +13,13 @@ Item {
         property var compo: Component {
             Item {
                 id: rectItem
-                property var input: ["posX","posY", "radius", "rectWidth", "rectHeight"]
+                property var input: ["posX","posY", "radius", "rectWidth", "rectHeight", "rectZ"]
                 property real posX
                 property real posY
                 property real radius
                 property real rectWidth
                 property real rectHeight
+                property int rectZ
                 Component.onCompleted: {
                     theRect.createObject(drawLib.canvas, {});
                 }
@@ -36,6 +37,7 @@ Item {
                         width: rectItem.rectWidth
                         height: rectItem.rectHeight
                         color: "blue"
+                        z: rectItem.rectZ
                     }
                 }
             }
