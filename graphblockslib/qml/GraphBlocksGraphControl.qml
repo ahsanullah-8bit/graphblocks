@@ -18,6 +18,8 @@ Item {
 
     property var ioBlocks
 
+    property bool manualMode: false
+
     property var classMap
     property alias blocksModel: quickAccessMenu.blocksModel
     //property ListModel blocksModel: ListModel { }
@@ -35,6 +37,101 @@ Item {
             }
         }
     }
+
+    // outToIn: [s]->[e]
+    // inToOut: [e]->[s]
+    function bfs(startNodes, outToIn, inToOut, fn) {
+        var visited = {};
+        var queue = startNodes;
+        while(queue.length > 0) {
+            var next = queue.shift();
+            if(visited[next]) continue;
+
+            if(fn(next, visited)) {
+                for(var c= 0 ; c < next.connections.length ; ++c) {
+                    var con = next.connections[c];
+                    if(outToIn) {
+                        if(con.getLineStart() === next) {
+                            queue.push(con.getLineEnd());
+                        }
+                    }
+                    if(inToOut) {
+                        if(con.getLineEnd() === next) {
+                            queue.push(con.getLineStart());
+                        }
+                    }
+                }
+            }
+            visited[next] = true;
+        }
+    }
+    function execute() {
+        //go back from all outputs to the first blocks, fire valueChanged
+        var bfsStart = [];
+        for(var b= 0 ; l < root.ioBlocks.length ; ++b) {
+            var ioBlock = root.ioBlocks[b];
+            if(ioBlock.isOutputBlock) {
+                bfsStart.push(ioBlock);
+            }
+        }
+        executeToBlocks(bfsStart);
+    }
+    function executeToBlocks(blocks) {
+        var blockExecList = [];
+        var dependentBlocks = {};
+        var numDepBlocks = 0;
+        root.bfs(blocks, false, true, function(blk, visited) {
+            numDepBlocks++;
+            var hasPrevBlocks = 0;
+            var hasCircles = 0;
+            dependentBlocks[blk] = [];
+            for(var c= 0 ; c < blk.connections.length ; ++c) {
+                var con = blk.connections[c];
+                if(con.getLineEnd() === blk) {
+                    hasPrevBlocks++;
+                    dependentBlocks[blk].push(con.getLineStart());
+                    if(!visited[con.getLineStart()]) {
+                        hasCircles++; // has previous block
+                    }
+                }
+            }
+            if((hasPrevBlocks - hasCircles) === 0) {
+                // one of the beginner blocks was found
+                blockExecList.push(blk);
+            }
+        });
+        var executed = [];
+        //first loop might be skipped, but could be speed up the calculation of dependencies
+        for(var b= 0 ; b < blockExecList.length ; ++b) {
+            var block = blockExecList[b];
+            block.execute();
+            executed.push(block);
+            delete dependentBlocks[block];// = undefined;
+        }
+        while(executed.length != numDepBlocks) {
+            for (var curBlk in dependentBlocks) {
+                if (dependentBlocks.hasOwnProperty(curBlk)) {
+                    var allDepsSatisfied = true;
+                    for(var d= 0 ; d < dependentBlocks[curBlk].length ; ++d) {
+                        var dep = dependentBlocks[curBlk][d];
+                        if(executed.indexOf(dep) == -1) {
+                            allDepsSatisfied = false;
+                            continue;
+                        }
+                    }
+                    if(allDepsSatisfied) {
+                        curBlk.execute();
+                        executed.push(curBlk);
+                        delete dependentBlocks[curBlk];// = undefined;
+                    }
+                }
+            }
+        }
+        if(executed.length != numDepBlocks) {
+            console.log("An error occurred, not all block/too many blocks executed");
+        }
+    }
+
     function findAllConnectionsBetweenBlocks( blocks ) {
         var ret = [];
         var connections = parentForConnections.children;
@@ -271,7 +368,7 @@ Item {
     }
 
     function loadGraphAsSuperblock(obj, offset) {
-
+        // todo
     }
 
     Component.onCompleted: {
@@ -486,7 +583,7 @@ Item {
                     id: lazyConnectionTimers
                 }
                 //TODO: Hopefully never called due to "lazyProps"-objects containing lazyTimers
-                // may be needed for completly graphicless graphs
+                // may be needed for completely graphicless graphs
                 property var lazyTimers
                 function getOrCreateLazyTimer(e1, e2, e3, e4) {
                     var a, b, c, d
