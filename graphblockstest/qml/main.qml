@@ -13,29 +13,41 @@ ApplicationWindow {
     visible: true
     ColumnLayout {
         anchors.fill: parent
-        Button {
-            text: "[Graph]-->[Blocks]"
-            GraphBlocksWindow {
-                id: gbw
-                control.input: ["mouseCoordX", "mouseCoordY"]
-                control.output: ["ballX", "ballY"]
-                control.sourceElement: gbw
-                property real ballX: 0
-                property real ballY: 0
-                property real mouseCoordX: ma.mouseX
-                property real mouseCoordY: ma.mouseY
-                visible: false
-                width: 800
-                height: 500
-                Component.onCompleted: {
-                    gbw.importLibrary("Draw", drawLib);
+        RowLayout {
+            Button {
+                text: "[Graph]-->[Blocks]"
+                GraphBlocksWindow {
+                    id: gbw
+                    control.input: ["mouseCoordX", "mouseCoordY"]
+                    control.output: ["ballX", "ballY"]
+                    control.sourceElement: gbw
+                    control.manualMode: manualMode.checked
+                    property real ballX: 0
+                    property real ballY: 0
+                    property real mouseCoordX: ma.mouseX
+                    property real mouseCoordY: ma.mouseY
+                    visible: false
+                    width: 800
+                    height: 500
+                    Component.onCompleted: {
+                        gbw.importLibrary("Draw", drawLib);
+                    }
+                    DrawingLibrary {
+                        id: drawLib
+                        canvas: drawingArea
+                    }
                 }
-                DrawingLibrary {
-                    id: drawLib
-                    canvas: drawingArea
-                }
+                onClicked: gbw.visible = !gbw.visible
             }
-            onClicked: gbw.visible = !gbw.visible
+            Button {
+                text: "Execute"
+                onClicked: gbw.control.execute()
+                enabled: manualMode.checked
+            }
+            CheckBox {
+                id: manualMode
+                text: "ManualMode"
+            }
         }
         Rectangle {
             id: drawingArea
