@@ -51,13 +51,13 @@ Item {
                 for(var c= 0 ; c < next.connections.length ; ++c) {
                     var con = next.connections[c];
                     if(outToIn) {
-                        if(con.getLineStart() === next) {
-                            queue.push(con.getLineEnd());
+                        if(con.getOutgoingBlock() === next) {
+                            queue.push(con.getIncomingBlock());
                         }
                     }
                     if(inToOut) {
-                        if(con.getLineEnd() === next) {
-                            queue.push(con.getLineStart());
+                        if(con.getIncomingBlock() === next) {
+                            queue.push(con.getOutgoingBlock());
                         }
                     }
                 }
@@ -68,29 +68,33 @@ Item {
     function execute() {
         //go back from all outputs to the first blocks, fire valueChanged
         var bfsStart = [];
-        for(var b= 0 ; l < root.ioBlocks.length ; ++b) {
-            var ioBlock = root.ioBlocks[b];
-            if(ioBlock.isOutputBlock) {
-                bfsStart.push(ioBlock);
+        for (var ioBlockName in root.ioBlocks) {
+            if (root.ioBlocks.hasOwnProperty(ioBlockName)) {
+                var ioBlock = root.ioBlocks[ioBlockName];
+                if(ioBlock.isOutputBlock) {
+                    bfsStart.push(ioBlock);
+                }
             }
         }
         executeToBlocks(bfsStart);
     }
     function executeToBlocks(blocks) {
         var blockExecList = [];
-        var dependentBlocks = {};
+        var dependentBlocks = [];
+        var uniqueIdToBlock = [];
         var numDepBlocks = 0;
         root.bfs(blocks, false, true, function(blk, visited) {
             numDepBlocks++;
             var hasPrevBlocks = 0;
             var hasCircles = 0;
-            dependentBlocks[blk] = [];
+            dependentBlocks[blk.uniqueId] = [];
+            uniqueIdToBlock[blk.uniqueId] = blk;
             for(var c= 0 ; c < blk.connections.length ; ++c) {
                 var con = blk.connections[c];
-                if(con.getLineEnd() === blk) {
+                if(con.getIncomingBlock() === blk) {
                     hasPrevBlocks++;
-                    dependentBlocks[blk].push(con.getLineStart());
-                    if(!visited[con.getLineStart()]) {
+                    dependentBlocks[blk.uniqueId].push(con.getOutgoingBlock());
+                    if(visited[con.getOutgoingBlock()]) {
                         hasCircles++; // has previous block
                     }
                 }
@@ -99,33 +103,42 @@ Item {
                 // one of the beginner blocks was found
                 blockExecList.push(blk);
             }
+            return true;
         });
         var executed = [];
         //first loop might be skipped, but could be speed up the calculation of dependencies
         for(var b= 0 ; b < blockExecList.length ; ++b) {
             var block = blockExecList[b];
-            block.execute();
+            if(typeof block.inner["execute"] === "function") {
+                block.inner.execute();
+            }
+            console.log("executed() " + block.displayName);
             executed.push(block);
-            delete dependentBlocks[block];// = undefined;
+            dependentBlocks[block.uniqueId] = undefined;
+            uniqueIdToBlock[block.uniqueId] = undefined;
         }
         while(executed.length != numDepBlocks) {
-            for (var curBlk in dependentBlocks) {
-                if (dependentBlocks.hasOwnProperty(curBlk)) {
+            dependentBlocks.forEach(function(deps, curBlk) {
+                if (curBlk !== undefined && deps !== undefined) {
                     var allDepsSatisfied = true;
-                    for(var d= 0 ; d < dependentBlocks[curBlk].length ; ++d) {
-                        var dep = dependentBlocks[curBlk][d];
+                    for(var d= 0 ; d < deps.length ; ++d) {
+                        var dep = deps[d];
                         if(executed.indexOf(dep) == -1) {
                             allDepsSatisfied = false;
-                            continue;
+                            break;
                         }
                     }
                     if(allDepsSatisfied) {
-                        curBlk.execute();
-                        executed.push(curBlk);
-                        delete dependentBlocks[curBlk];// = undefined;
+                        if(typeof uniqueIdToBlock[curBlk].inner["execute"] === "function") {
+                            uniqueIdToBlock[curBlk].inner.execute();
+                        }
+                        console.log("executed() " + uniqueIdToBlock[curBlk].displayName);
+                        executed.push(uniqueIdToBlock[curBlk]);
+                        dependentBlocks[curBlk] = undefined;
+                        uniqueIdToBlock[curBlk] = undefined;
                     }
                 }
-            }
+            });
         }
         if(executed.length != numDepBlocks) {
             console.log("An error occurred, not all block/too many blocks executed");
@@ -645,6 +658,9 @@ Item {
                                 outpElem[outpPropertyName] = 0;
                             }
                             inpElem[inpPropertyName] = outpElem[outpPropertyName];
+                            if(!root.manualMode && typeof inpElem["execute"] === "function") {
+                                inpElem.execute();
+                            }
                         };
                         var chSigNam = outpPropertyName.charAt(0).toUpperCase();
                         chSigNam += outpPropertyName.substring(1);
