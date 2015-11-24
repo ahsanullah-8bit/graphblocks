@@ -9,6 +9,9 @@ Item {
     id: root
     z: -100
 
+    property alias viewPositionX: flickable.contentX
+    property alias viewPositionY: flickable.contentY
+
     property bool isEditingSuperblock: false
 
     property var input
@@ -51,13 +54,13 @@ Item {
                 for(var c= 0 ; c < next.connections.length ; ++c) {
                     var con = next.connections[c];
                     if(outToIn) {
-                        if(con.getLineStart() === next) {
-                            queue.push(con.getLineEnd());
+                        if(con.getOutgoingBlock() === next) {
+                            queue.push(con.getIncomingBlock());
                         }
                     }
                     if(inToOut) {
-                        if(con.getLineEnd() === next) {
-                            queue.push(con.getLineStart());
+                        if(con.getIncomingBlock() === next) {
+                            queue.push(con.getOutgoingBlock());
                         }
                     }
                 }
@@ -68,29 +71,33 @@ Item {
     function execute() {
         //go back from all outputs to the first blocks, fire valueChanged
         var bfsStart = [];
-        for(var b= 0 ; l < root.ioBlocks.length ; ++b) {
-            var ioBlock = root.ioBlocks[b];
-            if(ioBlock.isOutputBlock) {
-                bfsStart.push(ioBlock);
+        for (var ioBlockName in root.ioBlocks) {
+            if (root.ioBlocks.hasOwnProperty(ioBlockName)) {
+                var ioBlock = root.ioBlocks[ioBlockName];
+                if(ioBlock.isOutputBlock) {
+                    bfsStart.push(ioBlock);
+                }
             }
         }
         executeToBlocks(bfsStart);
     }
     function executeToBlocks(blocks) {
         var blockExecList = [];
-        var dependentBlocks = {};
+        var dependentBlocks = [];
+        var uniqueIdToBlock = [];
         var numDepBlocks = 0;
         root.bfs(blocks, false, true, function(blk, visited) {
             numDepBlocks++;
             var hasPrevBlocks = 0;
             var hasCircles = 0;
-            dependentBlocks[blk] = [];
+            dependentBlocks[blk.uniqueId] = [];
+            uniqueIdToBlock[blk.uniqueId] = blk;
             for(var c= 0 ; c < blk.connections.length ; ++c) {
                 var con = blk.connections[c];
-                if(con.getLineEnd() === blk) {
+                if(con.getIncomingBlock() === blk) {
                     hasPrevBlocks++;
-                    dependentBlocks[blk].push(con.getLineStart());
-                    if(!visited[con.getLineStart()]) {
+                    dependentBlocks[blk.uniqueId].push(con.getOutgoingBlock());
+                    if(visited[con.getOutgoingBlock()]) {
                         hasCircles++; // has previous block
                     }
                 }
@@ -99,33 +106,48 @@ Item {
                 // one of the beginner blocks was found
                 blockExecList.push(blk);
             }
+            return true;
         });
         var executed = [];
         //first loop might be skipped, but could be speed up the calculation of dependencies
         for(var b= 0 ; b < blockExecList.length ; ++b) {
             var block = blockExecList[b];
-            block.execute();
+            if(typeof block.inner["execute"] === "function") {
+                if(block.dirty) {
+                    block.inner.execute();
+                    block.dirty = false;
+                }
+            }
+            console.log("executed() " + block.displayName);
             executed.push(block);
-            delete dependentBlocks[block];// = undefined;
+            dependentBlocks[block.uniqueId] = undefined;
+            uniqueIdToBlock[block.uniqueId] = undefined;
         }
         while(executed.length != numDepBlocks) {
-            for (var curBlk in dependentBlocks) {
-                if (dependentBlocks.hasOwnProperty(curBlk)) {
+            dependentBlocks.forEach(function(deps, curBlk) {
+                if (curBlk !== undefined && deps !== undefined) {
                     var allDepsSatisfied = true;
-                    for(var d= 0 ; d < dependentBlocks[curBlk].length ; ++d) {
-                        var dep = dependentBlocks[curBlk][d];
+                    for(var d= 0 ; d < deps.length ; ++d) {
+                        var dep = deps[d];
                         if(executed.indexOf(dep) == -1) {
                             allDepsSatisfied = false;
-                            continue;
+                            break;
                         }
                     }
                     if(allDepsSatisfied) {
-                        curBlk.execute();
-                        executed.push(curBlk);
-                        delete dependentBlocks[curBlk];// = undefined;
+                        if(typeof uniqueIdToBlock[curBlk].inner["execute"] === "function") {
+                            if(uniqueIdToBlock[curBlk].dirty) {
+                                uniqueIdToBlock[curBlk].inner.execute();
+                                uniqueIdToBlock[curBlk].dirty = false;
+                            }
+                        }
+                        console.log("executed() " + uniqueIdToBlock[curBlk].displayName);
+                        executed.push(uniqueIdToBlock[curBlk]);
+                        dependentBlocks[curBlk] = undefined;
+                        uniqueIdToBlock[curBlk] = undefined;
                     }
                 }
-            }
+            });
         }
         if(executed.length != numDepBlocks) {
             console.log("An error occurred, not all block/too many blocks executed");
@@ -175,7 +197,7 @@ Item {
 
         for(var i= 0 ; i < blocks.length ; ++i) {
             var block = blocks[i];
-            var serializedInner = block.inner.serialize?block.inner.serialize():{/*maybeTodo*/};
+            var serializedInner = block.inner.serialize?block.inner.serialize():{/*maybeTodo automatic serialize*/};
             var serializedBlock = {
                 blockProto: {
                     x:block.x - loadedOffsetX,
@@ -184,7 +206,8 @@ Item {
                     className: block.className?block.className:block.displayName,
                     uniqueId: block.uniqueId,
                     isInputBlock: block.isInputBlock,
-                    isOutputBlock: block.isOutputBlock},
+                    isOutputBlock: block.isOutputBlock,
+                    dirty: block.dirty},
                 innerProto: serializedInner};
             objToSerialize.blocks.push( serializedBlock );
         }
@@ -245,7 +268,7 @@ Item {
         setupInner(newBlockInner);
         newBlock.inner = newBlockInner;
         if(typeof(newBlockInner.initialize) === "function") {
-            newBlockInner.initialize();
+            newBlockInner.initialize(newBlock);
         }
         return newBlock;
     }
@@ -315,6 +338,7 @@ Item {
             offsety = ymin;
         }
 
+        var initialDirtyStates = [];
         for(var i= 0 ; i < blocks.length ; ++i) {
             var serBlock = blocks[i];
             if(!isEditingSuperblock && ( serBlock.blockProto.isInputBlock || serBlock.blockProto.isOutputBlock ) ) {
@@ -335,6 +359,7 @@ Item {
             newBlock.uniqueId += startUniqueId;
             newBlock.contextMenu = globalContextMenu;
             nextUniqueId = Math.max(nextUniqueId, newBlock.uniqueId);
+            initialDirtyStates[serBlock.blockProto.uniqueId] = newBlock.dirty; // the block state gets overwritten during initialization.
             var compo = root.classMap[blocks[i].blockProto.className];
             if(!compo) {
                 console.log("ERROR: graph could not be loaded due to unknown block type: \"" + blocks[i].blockProto.className + "\"");
@@ -347,7 +372,7 @@ Item {
                 var newBlockInner = compo.compo.createObject(newBlock.parentForInner, serBlock.innerProto);
                 newBlock.inner = newBlockInner;
                 if(typeof(newBlockInner.initialize) === "function") {
-                    newBlockInner.initialize();
+                    newBlockInner.initialize(newBlock); // also deserialize
                 }
                 blockIoChanged( newBlock );
             }
@@ -364,6 +389,11 @@ Item {
             var s1 = b1.getSlot(connection.pn1, connection.s1Inp);
             var s2 = b2.getSlot(connection.pn2, !connection.s1Inp);
             fullScreenMouseArea.createConnection(s1, s2);
+        }
+        for(var uId in initialDirtyStates) {
+            if(initialDirtyStates.hasOwnProperty(uId)) {
+                savedUniqueIdToBlock[uId].dirty = initialDirtyStates[uId];
+            }
         }
     }
 
@@ -387,7 +417,7 @@ Item {
             var dni = root.input[inputs].charAt(0).toUpperCase() + root.input[inputs].slice(1);
             createInputBlock(dni, function(innerBlock) {
                 var propName = root.input[inputs];
-                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( innerBlock, "outp", root.sourceElement, propName );
+                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( innerBlock, "outp", root.sourceElement, propName, undefined, undefined, undefined );
                 // never disconnected, ioblock persist!
             });
         }
@@ -395,7 +425,7 @@ Item {
             var dno = root.output[outputs].charAt(0).toUpperCase() + root.output[outputs].slice(1);
             createOutputBlock(dno, function(innerBlock) {
                 var propName = root.output[outputs];
-                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( root.sourceElement , propName, innerBlock, "inp" );
+                var disconnectLogicalFn = fullScreenMouseArea.createLogicalConnection( root.sourceElement , propName, innerBlock, "inp", undefined, undefined, innerBlock.parent );
                 // never disconnected, ioblock persist!
             });
         }
@@ -482,7 +512,7 @@ Item {
                 var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
                 newBlock.inner = newBlockInner;
                 if(typeof(newBlockInner.initialize) === "function") {
-                    newBlockInner.initialize();
+                    newBlockInner.initialize(newBlock);
                 }
                 newBlock.displayName = blockItem.displayName;
                 newBlock.className = blockItem.className?blockItem.className:blockItem.displayName;
@@ -629,7 +659,7 @@ Item {
                     return true;
                 }
 
-                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, initialBind, lazyProps) {
+                function createLogicalConnection(inpElem, inpPropertyName, outpElem, outpPropertyName, initialBind, lazyProps, inpStore) {
                     var typeIn = typeof inpElem[inpPropertyName];
                     var typeOut = typeof outpElem[outpPropertyName];
                     var fn;
@@ -645,8 +675,15 @@ Item {
                                 outpElem[outpPropertyName] = 0;
                             }
                             inpElem[inpPropertyName] = outpElem[outpPropertyName];
-                            if(!outpElem.parent.dirty && typeof outpElem.blockOuter["execute"] === "function") {
-                                outpElem.parent.dirty = true;
+                            if(typeof inpElem["execute"] === "function") {
+                                if(root.manualMode) {
+                                    if(inpStore && !inpStore.dirty) {
+                                        inpStore.dirty = true;
+                                    }
+                                } else if(inpStore.dirty) {
+                                    inpElem.execute();
+                                    inpStore.dirty = false;
+                                }
                             }
                         };
                         var chSigNam = outpPropertyName.charAt(0).toUpperCase();
@@ -732,7 +769,7 @@ Item {
                     var outpSrc = outp.block.isDynamic?outp.block.getBlockOutput(outp.propName):outp;
 
                     //TODO: remove is dynamic, loops of superblocks... recursive?!
-                    var disconnectLogicalFn = createLogicalConnection(inpSrc.block, inpSrc.propName, outpSrc.block, outpSrc.propName, !outpSrc.block.noInitialBind, inpSrc.block);
+                    var disconnectLogicalFn = createLogicalConnection(inpSrc.block, inpSrc.propName, outpSrc.block, outpSrc.propName, !outpSrc.block.noInitialBind, inpSrc.block, inpSrc.blockOuter);
 
                     var newConnection;
                     var disconnectFn = function() {

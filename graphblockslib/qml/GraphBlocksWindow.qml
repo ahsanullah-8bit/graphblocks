@@ -5,6 +5,7 @@ import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.1
 import FileIO 1.0
 import Library 1.0
+import Clipboard 1.0
 
 ApplicationWindow {
     title: qsTr("GraphBlocks")
@@ -111,6 +112,39 @@ ApplicationWindow {
                 onTriggered: Qt.quit();
             }
         }
+        Menu {
+            title: qsTr("&Edit")
+            MenuItem {
+                text: qsTr("&Copy")
+                onTriggered: console.log("not yet implemented. use crtl+c.");
+            }
+            MenuItem {
+                text: qsTr("&Paste")
+                onTriggered: {
+                    var cbdata = Clipboard.text;
+                    if( cbdata === "") return;
+                    var blocks = JSON.parse( cbdata );
+                    control.loadGraph( blocks, control.viewPositionX, control.viewPositionY);
+                }
+            }
+            MenuSeparator { }
+            MenuItem {
+                id: manualModeItem
+                text: qsTr("&Manual Mode")
+                checkable: true
+                checked: control.manualMode
+                onCheckedChanged: {
+                    control.manualMode = checked;
+                    manualModeCheckBox.checked = checked;
+                }
+            }
+            MenuItem {
+                id: executeItem
+                text: qsTr("E&xecute")
+                enabled: control.manualMode
+                onTriggered: control.execute();
+            }
+        }
     }
     FileDialog {
         id: saveFileDialog
@@ -181,18 +215,39 @@ ApplicationWindow {
                 importLibrary("internal", internalLib)
             }
         }
-        Item {
+        ColumnLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
-            GraphBlocksGraphControl {
-                id: graphBlockControl
-                anchors.fill: parent
-                blocksModel: theBlocksModel
-                isEditingSuperblock: root.isEditingSuperblock
+            RowLayout {
+                Layout.fillWidth: true
+                Button {
+                    text: "Execute"
+                    onClicked: executeItem.trigger();
+                    enabled: executeItem.enabled
+                }
+                CheckBox {
+                    id: manualModeCheckBox
+                    text: "Manual Mode"
+                    checked: control.manualMode
+                    onCheckedChanged: {
+                        control.manualMode = checked;
+                        manualModeItem.checked = checked;
+                    }
+                }
             }
             Item {
-                id: controlParent
-                anchors.fill: parent
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                GraphBlocksGraphControl {
+                    id: graphBlockControl
+                    anchors.fill: parent
+                    blocksModel: theBlocksModel
+                    isEditingSuperblock: root.isEditingSuperblock
+                }
+                Item {
+                    id: controlParent
+                    anchors.fill: parent
+                }
             }
         }
     }

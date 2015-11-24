@@ -111,6 +111,13 @@ Canvas {
         return slot2 ? parent.mapFromItem(slot2, slot2.width*0.5, slot2.height*0.5) : lineEnd;
     }
 
+    function getOutgoingBlock() {
+        return slot1.isOutput ? slot1.blockOuter : slot2.blockOuter;
+    }
+    function getIncomingBlock() {
+        return slot1.isInput ? slot1.blockOuter : slot2.blockOuter;
+    }
+
     Component.onCompleted: {
         setupBinding1();
         setupBinding2();

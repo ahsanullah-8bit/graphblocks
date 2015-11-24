@@ -24,5 +24,6 @@ Item {
     readonly property color contextMenuBorder: "#FF3333"
     readonly property color superblock1: "#779933"
     readonly property color superblock2: "#5C7829"
+    readonly property color dirtyBorder: "#FF0000"
 }
 

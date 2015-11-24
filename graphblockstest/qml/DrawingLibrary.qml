@@ -43,4 +43,24 @@ Item {
             }
         }
     }
+    Item {
+        id: calcALot
+        property string displayName: "CalcALot"
+        property var compo: Component {
+            Item {
+                id: rectItem
+                property var input: ["one","two", "three"]
+                property var output: ["four"]
+                property real one
+                property real two
+                property real three
+                property string four
+                function execute() {
+                    // has no bindings, but execute
+                    console.log("Calcing a lot");
+                    four = new Date().toLocaleTimeString();
+                }
+            }
+        }
+    }
 }

@@ -37,6 +37,15 @@ Item {
             return slotsOut[propName];
         }
     }
+    function setDirty() {
+        if(!dirty && typeof inner.execute === "function") {
+            if(root.parent.blockContext.manualMode) {
+                dirty = true;
+            } else {
+                inner.execute();
+            }
+        }
+    }
     ListModel
     {
         id: slotsInModel
@@ -160,6 +169,14 @@ Item {
             property bool activeDrop: drag.active
             onActiveDropChanged: forceActiveFocus()
         }
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            visible: root.dirty
+            color: "transparent"
+            border.color: "red"
+            border.width: 1
+        }
         Text {
             id: middleWidthText
             opacity: 0.0
@@ -200,7 +217,7 @@ Item {
             Text {
                 id: classNameText
                 visible: typeof root.inner != "object"
-                color: "red"
+                color: ColorTheme.dirtyBorder
                 text: "Class:\n" + root.className
                 font.capitalization: Font.SmallCaps
                 font.pointSize: 8
@@ -425,6 +442,16 @@ Item {
             name: "Save Block to Library",
             action: function( data, settings ) { settings.saveBlockToLibrary( root ); },
             enabled: function( data, settings ) { return  !(root.isInputBlock || root.isOutputBlock); }
+        },
+        {
+            name: "Execute",
+            action: function( data, settings ) { root.inner.execute(); root.dirty = false; },
+            enabled: function( data, settings ) { return  !(root.isInputBlock || root.isOutputBlock) && (typeof root.inner.execute == "function"); }
+        },
+        {
+            name: "Execute until here",
+            action: function( data, settings ) { root.parent.blockContext.executeToBlocks([root]); },
+            enabled: function( data, settings ) { return  !root.isInputBlock ; }
         }
     ]
 }
