@@ -12,5 +12,7 @@
         <file>qml/GraphBlocksDynamicBlockInner.qml</file>
         <file>qml/GraphBlocksSuperBlock.qml</file>
         <file>qml/QuickAccessMenu.qml</file>
+        <file>qml/executor.js</file>
+        <file>qml/Scheduler.qml</file>
     </qresource>
 </RCC>

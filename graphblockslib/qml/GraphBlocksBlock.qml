@@ -46,12 +46,10 @@ Item {
             }
         }
     }
-    ListModel
-    {
+    ListModel {
         id: slotsInModel
     }
-    ListModel
-    {
+    ListModel {
         id: slotsOutModel
     }
     function addInputSlot(name, idx) {

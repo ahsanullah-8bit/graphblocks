@@ -21,6 +21,8 @@ Item {
 
     property var ioBlocks
 
+    //property Scheduler execultionScheduler: Scheduler {}
+
     property bool manualMode: false
 
     property var classMap
@@ -137,6 +139,16 @@ Item {
                     if(allDepsSatisfied) {
                         if(typeof uniqueIdToBlock[curBlk].inner["execute"] === "function") {
                             if(uniqueIdToBlock[curBlk].dirty) {
+//                                var goOn = false;
+//                                console.log("Start");
+//                                execultionScheduler.executeBlock(curBlk, uniqueIdToBlock[curBlk].inner, console.log, function(){
+//                                    goOn = true;
+//                                    console.log("Done");
+//                                });
+//                                console.log("Wait");
+//                                while(!goOn) {
+//                                }
+//                                console.log("All Done");
                                 uniqueIdToBlock[curBlk].inner.execute();
                                 uniqueIdToBlock[curBlk].dirty = false;
                             }
@@ -681,6 +693,13 @@ Item {
                                         inpStore.dirty = true;
                                     }
                                 } else if(inpStore.dirty) {
+//                                    var goOn = false;
+//                                    execultionScheduler.executeBlock(inpStore.uniqueId, inpElem, console.log, function(){
+//                                        goOn = true;
+//                                    });
+//                                    while(!goOn) {
+//                                        wait(1);
+//                                    }
                                     inpElem.execute();
                                     inpStore.dirty = false;
                                 }

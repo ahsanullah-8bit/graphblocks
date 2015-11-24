@@ -39,15 +39,7 @@ ApplicationWindow {
                 }
                 onClicked: gbw.visible = !gbw.visible
             }
-            Button {
-                text: "Execute"
-                onClicked: gbw.control.execute()
-                enabled: manualMode.checked
-            }
-            CheckBox {
-                id: manualMode
-                text: "ManualMode"
-            }
+            // more controls here ...
         }
         Rectangle {
             id: drawingArea
