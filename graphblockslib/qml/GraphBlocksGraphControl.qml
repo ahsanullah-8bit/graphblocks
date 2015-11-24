@@ -645,6 +645,9 @@ Item {
                                 outpElem[outpPropertyName] = 0;
                             }
                             inpElem[inpPropertyName] = outpElem[outpPropertyName];
+                            if(!outpElem.parent.dirty && typeof outpElem.blockOuter["execute"] === "function") {
+                                outpElem.parent.dirty = true;
+                            }
                         };
                         var chSigNam = outpPropertyName.charAt(0).toUpperCase();
                         chSigNam += outpPropertyName.substring(1);

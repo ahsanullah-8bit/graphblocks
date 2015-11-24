@@ -29,6 +29,7 @@ Item {
     property bool isInputBlock: false
     property bool isOutputBlock: false
     property var contextMenu
+    property bool dirty: false // value changed but execute was not called
     function getSlot(propName, isInput) {
         if(isInput) {
             return slotsIn[propName];
