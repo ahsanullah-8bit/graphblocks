@@ -1,5 +1,5 @@
-#ifndef LIBRARAY_H
-#define LIBRARAY_H
+#ifndef LIBRARY_H
+#define LIBRARY_H
 
 #include <QObject>
 #include <QQmlEngine>
