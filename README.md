@@ -1,10 +1,11 @@
 # [Graph]-->[Blocks]
 GraphBlocks provides an easy way to make program logic accessible and customizable to end users. It is easy to integrate for developers.
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_overview.png "Overview")
 
 # Overview
 Not everyone is a developer! When working together with artists or business people there sometimes is a need
 to express sourcecode in a way everyone can understand or even work with. Enter GraphBlocks. It provides an easy-to-use
-component to integrate into your Qt Qml application.
+component to integrate easily into your Qt Qml application.
 * **For the User** it opens a window with an graphical editor. Design program behavious with Drag & Drop.
 * **For the application** there are two modes of operation
  * define your input and output. Using Qmls property bindings the output is recalculated whenever the input changes (or the user changes the graph) or
