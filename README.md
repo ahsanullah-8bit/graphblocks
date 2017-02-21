@@ -28,9 +28,6 @@ component to integrate easily into your Qt Qml application.
 The quick access menu let's you filter an search all available block types
 ![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example2.png "Quick Access menu")
 
-Graphs can be saved as new block types in a library using Super Blocks
-![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_superblock_save.png "Super Blocks")
-
 ## Usage of the Example
 
 This repository comes with a small example next to the library itself. The example publishes mouse coordinates
