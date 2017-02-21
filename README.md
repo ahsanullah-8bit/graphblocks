@@ -8,25 +8,62 @@ to express sourcecode in a way everyone can understand or even work with. Enter 
 component to integrate easily into your Qt Qml application.
 * **For the User** it opens a window with an graphical editor. Design program behavious with Drag & Drop.
 * **For the application** there are two modes of operation
- * define your input and output. Using Qmls property bindings the output is recalculated whenever the input changes (or the user changes the graph) or
- * a simple function is returned. It can be called whenever the application desires to execute the usergenerated code.
+ * define your input and output. Using Qmls property bindings. The output is recalculated whenever the input changes (or the user changes the graph) or
+ * a simple function/callback is provided to the application, that was designed by the user. It can be called whenever the application desires to execute the usergenerated code.
  
  Whatever mode you choose, Blocks with custom (Javascript) applicationcode can be made available to the user easily.
  
 ## Features
-* Save and load Graphs you created previously
+* Design code using visual programming, drag & drop.
+* Save and load graphs of blocks
 * Import libraries of blocks the application provides.
 * Easy block-interface for the application: A block can be a simple qml file.
+* Rename Blocks as you like
+* Copy/Paste of blocks. Use shortcuts.
 * SuperBlocks: Define input and output of your graph and save it as a SuperBlock. It can then be used just like a normal block.
  Double-clicking it will take the user to the graph behind the SuperBlock.
 * Input and outputs can be very flexible by using Qt/Qmls native mechanisms.
 * Quick Access menu. Use space of right-click to open a list of blocks that can be used. Type the name of a block to filter.
+
+The quick access menu let's you filter an search all available block types
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example2.png "Quick Access menu")
+
+Graphs can be saved as new block types in a library using Super Blocks
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_superblock_save.png "Super Blocks")
 
 ## Usage of the Example
 
 This repository comes with a small example next to the library itself. The example publishes mouse coordinates
 to a GraphBlocks instance. It reads a coordiante to draw a red ball at that position.
 Custom blocks are available which allow to draw rectangles. This is everything we need to create a small pong-game!
+
+The Example defines input (blue) and output (red).
+
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example5.png "blank sample application")
+
+You can drag and drop blocks from the left into the graph area. For example the SinusValue block looks like this
+
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example3.png "blank sample application")
+
+Drag a line from the black output splot from a block and connect it to the input of another block to create program logic.
+
+### Superblocks
+
+Drag and drop a Superblock from the library (left) into the grapharea, then double-click it's green button. A new empty grapharea apears.
+
+Create input for the Superblock by dragging a block from the library into the emtpy area, e.g. a real value. To mark this block as input, simply right-click it and choose "convert to public input".
+
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_input.png "Superblock input")
+
+Do the same for output by selection "convert to public output".
+
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_output.png "Superblock output")
+
+When you are finished, click the "back" button at the top left.
+
+You can safe your work to the library by right-clicking the superblock an select "Save Block to Library"
+
+![alt text](https://github.com/dabulla/graphblocks/raw/master/doc/example_superblock_save.png "Super Blocks")
 
 
 ## Usage in your application
