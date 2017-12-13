@@ -20,7 +20,7 @@ ApplicationWindow {
         var ser = Library.loadLibs();
         var libs = JSON.parse( ser );
         for(var lib in libs) {
-            importLibrary(libs[lib].name, libs[lib].entries);
+            graphBlockControl.importLibrary(libs[lib].name, libs[lib].entries);
         }
     }
     //// TODO: make private ////
@@ -47,37 +47,9 @@ ApplicationWindow {
         }
     }
     ////////
-    ListModel {
-        id: theBlocksModel
-    }
 
     function importLibrary(name, lib) {
-        if(typeof graphBlockControl.classMap === "undefined") {
-            graphBlockControl.classMap = {};
-        }
-        var blocks;
-        if( lib.children ) {
-            blocks = lib.children;
-        } else {
-            blocks = lib;
-        }
-        for(var i=0 ; i < blocks.length ; ++i) {
-            importBlockToLib(blocks[i]);
-        }
-    }
-    function importBlockToLib( blockInfo ) {
-        if( blockInfo.compo ) {
-            var cn = blockInfo.className?blockInfo.className:blockInfo.displayName;
-            graphBlockControl.classMap[cn] = blockInfo;
-        }
-        var block = {
-            displayName: blockInfo.displayName?blockInfo.className?blockInfo.className:blockInfo.displayName:blockInfo.displayName,
-            className: blockInfo.className?blockInfo.className:blockInfo.displayName,
-            compo: blockInfo.compo,
-            graph: blockInfo.graph,
-            isClass: blockInfo.compo !== undefined && blockInfo.compo !== null
-        };
-        theBlocksModel.append(block);
+        graphBlockControl.importLibrary(name, lib)
     }
 
     function loadGraph(json, x, y) {
@@ -209,10 +181,10 @@ ApplicationWindow {
             id: graphBlockView
             Layout.fillHeight: true
             width: 100
-            blocksModel: theBlocksModel
+            blocksModel: graphBlockControl.blocksModel
             Component.onCompleted: {
-                importLibrary("basic", basicLib);
-                importLibrary("internal", internalLib)
+                graphBlockControl.importLibrary("basic", basicLib);
+                graphBlockControl.importLibrary("internal", internalLib)
             }
         }
         ColumnLayout {
@@ -241,7 +213,6 @@ ApplicationWindow {
                 GraphBlocksGraphControl {
                     id: graphBlockControl
                     anchors.fill: parent
-                    blocksModel: theBlocksModel
                     isEditingSuperblock: root.isEditingSuperblock
                 }
                 Item {
@@ -255,7 +226,7 @@ ApplicationWindow {
         id: superBlockControlCompo
         GraphBlocksGraphControl {
             anchors.fill: parent
-            blocksModel: theBlocksModel //TODO: if this does not work, give via prototype
+            blocksModel: graphBlockControl.blocksModel //TODO: if this does not work, give via prototype
             isEditingSuperblock: true
             visible: false
         }

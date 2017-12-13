@@ -11,7 +11,7 @@
 
 struct GraphblocksContext
 {
-    Library m_lib;
+    graphblocks::Library m_lib;
 };
 
 GraphblocksContext* initializeGraphBlocks()
@@ -22,16 +22,16 @@ GraphblocksContext* initializeGraphBlocks()
 
     GraphblocksContext* ctx = new GraphblocksContext();
 
-    qmlRegisterType<FileIO, 1>("FileIO", 1, 0, "FileIO");
-    qmlRegisterSingletonType<Clipboard>("Clipboard", 1, 0, "Clipboard", &Clipboard::qmlInstance);
-    qmlRegisterSingletonType<Library>("Library", 1, 0, "Library", &Library::qmlInstance);
+    qmlRegisterType<graphblocks::FileIO, 1>("FileIO", 1, 0, "FileIO");
+    qmlRegisterSingletonType<graphblocks::Clipboard>("Clipboard", 1, 0, "Clipboard", &graphblocks::Clipboard::qmlInstance);
+    qmlRegisterSingletonType<graphblocks::Library>("Library", 1, 0, "Library", &graphblocks::Library::qmlInstance);
     return new GraphblocksContext();
 }
 
 
 void addGraphBlocksLibrary(QQmlEngine *ctx, const QString &libname, const QString &folder)
 {
-    Library *lib = Library::getInstance( ctx );
+    graphblocks::Library *lib = graphblocks::Library::getInstance( ctx );
     if( !lib ) {
         qDebug() << "Library manager not avaliable";
         return;

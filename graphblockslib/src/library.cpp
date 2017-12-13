@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QStringBuilder>
 
+namespace graphblocks {
+
 bool Library::addLibrary(const QString &libname, const QString &folder)
 {
     qDebug() << "Adding library " << libname << " " << folder;
@@ -177,4 +179,6 @@ QString Library::loadLib(const QString &libname)
     }
     libStr += "}";
     return libStr;
+}
+
 }

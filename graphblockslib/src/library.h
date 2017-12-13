@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QQmlEngine>
 
+namespace graphblocks {
+
 class Library : public QObject
 {
     Q_OBJECT
@@ -44,5 +46,7 @@ private:
     QMap<QString, QString> m_folderToLib;
     QMap<QString, QString> m_libToFolder;
 };
+
+}
 
 #endif // FILEIO_H

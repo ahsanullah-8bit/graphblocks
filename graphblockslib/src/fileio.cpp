@@ -2,6 +2,8 @@
 #include <QFile>
 #include <QTextStream>
 
+namespace graphblocks {
+
 FileIO::FileIO(QObject *parent) :
     QObject(parent)
 {
@@ -60,4 +62,6 @@ bool FileIO::write(const QString& data)
     file.close();
 
     return true;
+}
+
 }

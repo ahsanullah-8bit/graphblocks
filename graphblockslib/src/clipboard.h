@@ -6,6 +6,8 @@
 #include <QMimeData>
 #include <QQmlEngine>
 
+namespace graphblocks {
+
 class Clipboard : public QObject
 {
     Q_OBJECT
@@ -32,4 +34,5 @@ public slots:
     }
 };
 
-#endif // FILEIO_H
+}
+#endif // CLIPBOARD_H

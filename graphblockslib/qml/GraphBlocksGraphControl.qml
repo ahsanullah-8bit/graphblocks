@@ -43,6 +43,38 @@ Item {
         }
     }
 
+
+    function importLibrary(name, lib) {
+        if(typeof root.classMap === "undefined") {
+            root.classMap = {};
+        }
+        var blocks;
+        if( lib.children ) {
+            blocks = lib.children;
+        } else {
+            blocks = lib;
+        }
+        for(var i=0 ; i < blocks.length ; ++i) {
+            importBlockToLib(blocks[i]);
+        }
+    }
+    function importBlockToLib( blockInfo ) {
+        if( blockInfo.compo ) {
+            var cn = blockInfo.className?blockInfo.className:blockInfo.displayName;
+            root.classMap[cn] = blockInfo;
+        }
+        var block = {
+            displayName: blockInfo.displayName?blockInfo.className?blockInfo.className:blockInfo.displayName:blockInfo.displayName,
+            className: blockInfo.className?blockInfo.className:blockInfo.displayName,
+            compo: blockInfo.compo,
+            graph: blockInfo.graph,
+            isClass: blockInfo.compo !== undefined && blockInfo.compo !== null
+        };
+        root.blocksModel.append(block);
+    }
+
+
+
     // outToIn: [s]->[e]
     // inToOut: [e]->[s]
     function bfs(startNodes, outToIn, inToOut, fn) {
@@ -79,6 +111,12 @@ Item {
                 if(ioBlock.isOutputBlock) {
                     bfsStart.push(ioBlock);
                 }
+            }
+        }
+        if(bfsStart.length == 0) {
+            console.log("No IO Blocks, refreshing all blocks")
+            for(var i= 0 ; i < parentForBlocks.children.length ; ++i) {
+                bfsStart.push(parentForBlocks.children[i])
             }
         }
         executeToBlocks(bfsStart);
@@ -498,7 +536,8 @@ Item {
                 anchors.fill: parent
 
                 onDropped: {
-                    if( drop.source.myCompo || drop.source.myGraph) {
+                    console.log("DBG: dropped block: " + drop.source)
+                    if( drop.source.myCompo || drop.source.myGraph || drop.source.currentClassName) {
                         var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x+drop.source.width*0.5, drop.source.y+drop.source.height*0.5);
                         //var xy = parentForBlocks.mapFromItem(fullScreenMouseArea, fullScreenMouseArea.mouseX, fullScreenMouseArea.mouseY);
                         zoomer.createBlock(drop.source, xy.x, xy.y);
@@ -508,9 +547,9 @@ Item {
                 }
             }
             //blockinfo has either a component or graph member to instantiate a new block/graph
-            //currentClassName: dragDrop, className: fromModel, myGraph: fromDragDrop: Textdelegate, graph: from Model directly: QWuickAccesssMenu
+            //currentClassName: dragDrop, className: fromModel, myGraph: fromDragDrop: Textdelegate, graph: from Model directly: QuickAccesssMenu
             function createBlock(blockInfo, x, y) {
-                if( (blockInfo.graph || blockInfo.myGraph) && !(blockInfo.isClass || blockInfo.myIsClass) ) {
+                if( blockInfo && ((blockInfo.graph || blockInfo.myGraph) && !(blockInfo.isClass || blockInfo.myIsClass) ) ) {
                     //console.log("mygr: " + blockInfo.displayName + " gr: " + blockInfo.graph + " js: " + JSON.stringify( blockInfo ));
                     root.loadGraph( blockInfo.myGraph?blockInfo.myGraph:blockInfo.graph, x, y, true, true);
                     return;
@@ -521,7 +560,9 @@ Item {
                 newBlock.contextMenu = globalContextMenu;
                 var blockItem = root.classMap[className];
                 var blockCompo = blockItem.compo;
-                var newBlockInner = blockCompo.createObject(newBlock.parentForInner, {});
+                var params = {}
+                if(blockInfo.parameters) params = blockInfo.parameters
+                var newBlockInner = blockCompo.createObject(newBlock.parentForInner, params);
                 newBlock.inner = newBlockInner;
                 if(typeof(newBlockInner.initialize) === "function") {
                     newBlockInner.initialize(newBlock);

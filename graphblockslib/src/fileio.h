@@ -3,6 +3,7 @@
 
 #include <QObject>
 
+namespace graphblocks {
 class FileIO : public QObject
 {
     Q_OBJECT
@@ -29,5 +30,6 @@ signals:
 private:
     QString mSource;
 };
+}
 
 #endif // FILEIO_H
