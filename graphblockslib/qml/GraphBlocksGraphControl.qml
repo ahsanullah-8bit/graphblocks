@@ -493,7 +493,7 @@ Item {
         }
     }
     Flickable {
-        id:flickable
+        id: flickable
         anchors.fill: parent
         contentHeight: zoomer.width*zoomer.myScale
         contentWidth: zoomer.height*zoomer.myScale
@@ -536,7 +536,6 @@ Item {
                 anchors.fill: parent
 
                 onDropped: {
-                    console.log("DBG: dropped block: " + drop.source)
                     if( drop.source.myCompo || drop.source.myGraph || drop.source.currentClassName) {
                         var xy = parentForBlocks.mapFromItem(drop.source.parent, drop.source.x+drop.source.width*0.5, drop.source.y+drop.source.height*0.5);
                         //var xy = parentForBlocks.mapFromItem(fullScreenMouseArea, fullScreenMouseArea.mouseX, fullScreenMouseArea.mouseY);

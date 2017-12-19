@@ -13,7 +13,7 @@ find_package(Qt5Qml 5.5 REQUIRED)
 find_package(Qt5Widgets 5.5 REQUIRED)
 find_package(Qt5Quick 5.5 REQUIRED)
 
-include_directories(${PROJECT_SOURCE_DIR}/src/ ${GRAPHBLOCKS_INCLUDE})
+include_directories(${PROJECT_SOURCE_DIR}/src/)
 
 QT5_ADD_RESOURCES(GraphBlockTestResources qml.qrc)
 
