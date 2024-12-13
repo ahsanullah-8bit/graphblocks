@@ -13,6 +13,20 @@ component to integrate easily into your Qt Qml application.
  
  Whatever mode you choose, Blocks with custom (Javascript) applicationcode can be made available to the user easily.
  
+## Building
+Building guide is the same for all platforms, except installing the Qt.
+### Linux
+* Go to [Qt for Open Souce developement](https://www.qt.io/download-open-source) and download the Qt Online Installer binaries at the bottom. In the installer, log in, do the license stuff until you get to the components.
+* Check the `Archives` and click `Filter` on the right, older versions of Qt will be listed as well now.
+* Check on the `Qt 5.15` and select other options you want, and download. Make sure Qt Creator is also downloaded.
+* Clone this repo, open it in Qt Creator and hit run.
+```
+> git clone --recursive https://github.com/ahsanullah-8bit/graphblocks.git
+```
+
+### Windows
+Same as the linux setup...
+
 ## Features
 * Design code using visual programming, drag & drop.
 * Save and load graphs of blocks
